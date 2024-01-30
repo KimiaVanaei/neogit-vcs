@@ -6,12 +6,11 @@ int create_configs(char *username, char *email)
 	if (file == NULL)
 		return 1;
 
-	fprintf(file, "global username: %s\n", username);
-	fprintf(file, "global email: %s\n", email);
+	fprintf(file, "local username: %s\n", username);
+	fprintf(file, "local email: %s\n", email);
 	fprintf(file, "last_commit_ID: %d\n", 0);
 	fprintf(file, "current_commit_ID: %d\n", 0);
 	fprintf(file, "branch: %s", "master");
-
 	fclose(file);
 
 	if (mkdir(".neogit/commits", 0755) != 0)
@@ -19,7 +18,7 @@ int create_configs(char *username, char *email)
 
 	if (mkdir(".neogit/files", 0755) != 0)
 		return 1;
-		if (mkdir(".neogit/branches", 0755) != 0)
+	if (mkdir(".neogit/branches", 0755) != 0)
 		return 1;
 
 	file = fopen(".neogit/staging", "w");
@@ -27,15 +26,6 @@ int create_configs(char *username, char *email)
 
 	file = fopen(".neogit/tracks", "w");
 	fclose(file);
-
-	FILE *file2 = fopen(".neogit/local_config", "w");
-	if (file2 == NULL)
-		return 1;
-
-	fprintf(file2, "username: %s\n", username);
-	fprintf(file2, "email: %s\n", email);
-
-	fclose(file2);
 
 	FILE *file3 = fopen(".neogit/local_aliases", "w");
 	if (file3 == NULL)

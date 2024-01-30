@@ -2,16 +2,19 @@
 
 void update_username(char *new_usr)
 {
-	FILE *file = fopen(".neogit/config", "r");
+	FILE *file = fopen("/home/kimia/.neogitconfig/info.txt", "r");
 	if (file == NULL)
 		return;
 
-	FILE *tmp_file = fopen(".neogit/tmp_config", "w");
+	FILE *tmp_file = fopen("/home/kimia/.neogitconfig/tmpinfo.txt", "w");
 	if (tmp_file == NULL)
 	{
 		fclose(file);
 		return;
 	}
+	if (file == NULL)
+		return;
+
 	char line[1024];
 	while (fgets(line, sizeof(line), file) != NULL)
 	{
@@ -26,16 +29,16 @@ void update_username(char *new_usr)
 	}
 	fclose(file);
 	fclose(tmp_file);
-	remove(".neogit/config");
-	rename(".neogit/tmp_config", ".neogit/config");
+	remove("/home/kimia/.neogitconfig/info.txt");
+	rename("/home/kimia/.neogitconfig/tmpinfo.txt", "/home/kimia/.neogitconfig/info.txt");
 }
 void update_email(char *new_eml)
 {
-	FILE *file = fopen(".neogit/config", "r");
+	FILE *file = fopen("/home/kimia/.neogitconfig/info.txt", "r");
 	if (file == NULL)
 		return;
 
-	FILE *tmp_file = fopen(".neogit/tmp_config", "w");
+	FILE *tmp_file = fopen("/home/kimia/.neogitconfig/tmpinfo.txt", "w");
 	if (tmp_file == NULL)
 	{
 		fclose(file);
@@ -55,6 +58,6 @@ void update_email(char *new_eml)
 	}
 	fclose(file);
 	fclose(tmp_file);
-	remove(".neogit/config");
-	rename(".neogit/tmp_config", ".neogit/config");
+	remove("/home/kimia/.neogitconfig/info.txt");
+	rename("/home/kimia/.neogitconfig/tmpinfo.txt", "/home/kimia/.neogitconfig/info.txt");
 }

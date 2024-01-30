@@ -2,7 +2,7 @@
 
 void update_localusername(char *new_usr)
 {
-	FILE *file = fopen(".neogit/local_config", "r");
+	FILE *file = fopen(".neogit/config", "r");
 	if (file == NULL)
 		return;
 
@@ -15,9 +15,9 @@ void update_localusername(char *new_usr)
 	char line[1024];
 	while (fgets(line, sizeof(line), file) != NULL)
 	{
-		if (strncmp(line, "username", 8) == 0)
+		if (strncmp(line, "local username", 14) == 0)
 		{
-			fprintf(tmp_file, "username: %s\n", new_usr);
+			fprintf(tmp_file, "local username: %s\n", new_usr);
 		}
 		else
 		{
@@ -26,12 +26,12 @@ void update_localusername(char *new_usr)
 	}
 	fclose(file);
 	fclose(tmp_file);
-	remove(".neogit/local_config");
-	rename(".neogit/tmp_config", ".neogit/local_config");
+	remove(".neogit/config");
+	rename(".neogit/tmp_config", ".neogit/config");
 }
 void update_localemail(char *new_eml)
 {
-	FILE *file = fopen(".neogit/local_config", "r");
+	FILE *file = fopen(".neogit/config", "r");
 	if (file == NULL)
 		return;
 
@@ -44,9 +44,9 @@ void update_localemail(char *new_eml)
 	char line[1024];
 	while (fgets(line, sizeof(line), file) != NULL)
 	{
-		if (strncmp(line, "email", 5) == 0)
+		if (strncmp(line, "local email", 11) == 0)
 		{
-			fprintf(tmp_file, "email: %s\n", new_eml);
+			fprintf(tmp_file, "local email: %s\n", new_eml);
 		}
 		else
 		{
@@ -55,6 +55,6 @@ void update_localemail(char *new_eml)
 	}
 	fclose(file);
 	fclose(tmp_file);
-	remove(".neogit/local_config");
-	rename(".neogit/tmp_config", ".neogit/local_config");
+	remove(".neogit/config");
+	rename(".neogit/tmp_config", ".neogit/config");
 }
