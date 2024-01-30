@@ -45,7 +45,7 @@ void update_localusername(char *new_usr);
 void update_localemail(char *new_eml);
 int run_checkout(int argc, char *const argv[]);
 int find_file_last_change_before_commit(char *filepath, int commit_ID);
-int checkout_file(char *filepath, int commit_ID);
+int checkout_file(char *filename, int commit_ID, char *filepath);
 int remove_from_staging(char *filename);
 int run_add_single(char *path);
 int add_depth(const char *currentDir, int depth);
@@ -92,6 +92,7 @@ char *currentBranch();
 void printLogContentbyBranch(char *target_branch);
 void printLogContentbyAuthor(char *target_author);
 void printLogContentbyWord(char *target_word);
+int saveContent(int commit_ID, char* filepath, char *filename);
 
 
 

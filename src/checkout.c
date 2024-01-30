@@ -54,9 +54,17 @@ int run_checkout(int argc, char *const argv[])
 	struct dirent *entry;
 	while ((entry = readdir(dir)) != NULL)
 	{
-		if (entry->d_type == DT_REG && is_tracked(entry->d_name))
+		if (entry->d_type == DT_REG)
 		{
-			checkout_file(entry->d_name, find_file_last_change_before_commit(entry->d_name, commit_ID));
+			char filePath[PATH_MAX];
+			if (realpath(entry->d_name, filePath) == NULL)
+			{
+				perror("realpath");
+				exit(EXIT_FAILURE);
+			}
+
+			if (is_tracked(filePath))
+			checkout_file(entry->d_name, find_file_last_change_before_commit(entry->d_name, commit_ID), filePath);
 		}
 	}
 	closedir(dir);
@@ -89,11 +97,13 @@ bool is_tracked(char *filepath)
 	return false;
 }
 
-int find_file_last_change_before_commit(char *filepath, int commit_ID)
+int find_file_last_change_before_commit(char *filename, int commit_ID)
 {
 	char filepath_dir[1024];
 	strcpy(filepath_dir, ".neogit/files/");
-	strcat(filepath_dir, filepath);
+	strcat(filepath_dir, filename);
+	strcat(filepath_dir, "/");
+
 
 	int max = -1;
 
@@ -102,27 +112,21 @@ int find_file_last_change_before_commit(char *filepath, int commit_ID)
 	if (dir == NULL)
 		return 1;
 
-	while ((entry = readdir(dir)) != NULL)
+	while ((entry = readdir(dir)) != NULL && (max <commit_ID))
 	{
-		if (entry->d_type == DT_REG)
-		{
 			int tmp = atoi(entry->d_name);
-			if (tmp > max && tmp <= commit_ID)
-			{
 				max = tmp;
-			}
-		}
 	}
 	closedir(dir);
 
 	return max;
 }
 
-int checkout_file(char *filepath, int commit_ID)
+int checkout_file(char *filename, int commit_ID, char *filepath)
 {
 	char src_file[1024];
 	strcpy(src_file, ".neogit/files/");
-	strcat(src_file, filepath);
+	strcat(src_file, filename);
 	char tmp[10];
 	sprintf(tmp, "/%d", commit_ID);
 	strcat(src_file, tmp);
