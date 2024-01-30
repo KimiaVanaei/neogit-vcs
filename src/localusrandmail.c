@@ -2,59 +2,147 @@
 
 void update_localusername(char *new_usr)
 {
-	FILE *file = fopen(".neogit/config", "r");
-	if (file == NULL)
+	char cwd[1024];
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		return;
 
-	FILE *tmp_file = fopen(".neogit/tmp_config", "w");
-	if (tmp_file == NULL)
+	char tmp_cwd[1024];
+	bool exists = false;
+	struct dirent *entry;
+	do
 	{
-		fclose(file);
+		DIR *dir = opendir(".");
+		if (dir == NULL)
+		{
+			perror("Error opening current directory");
+			return;
+		}
+		while ((entry = readdir(dir)) != NULL)
+		{
+			if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
+				exists = true;
+		}
+		closedir(dir);
+
+		if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+			return;
+
+		if (strcmp(tmp_cwd, "/") != 0)
+		{
+			if (chdir("..") != 0)
+				return;
+		}
+
+	} while (strcmp(tmp_cwd, "/") != 0);
+
+	if (chdir(cwd) != 0)
+		return;
+
+	if (!exists)
+	{
+		perror("neogit has not been initialized");
 		return;
 	}
-	char line[1024];
-	while (fgets(line, sizeof(line), file) != NULL)
+	else
 	{
-		if (strncmp(line, "local username", 14) == 0)
+		FILE *file = fopen(".neogit/config", "r");
+		if (file == NULL)
+			return;
+
+		FILE *tmp_file = fopen(".neogit/tmp_config", "w");
+		if (tmp_file == NULL)
 		{
-			fprintf(tmp_file, "local username: %s\n", new_usr);
+			fclose(file);
+			return;
 		}
-		else
+		char line[1024];
+		while (fgets(line, sizeof(line), file) != NULL)
 		{
-			fprintf(tmp_file, "%s", line);
+			if (strncmp(line, "local username", 14) == 0)
+			{
+				fprintf(tmp_file, "local username: %s\n", new_usr);
+			}
+			else
+			{
+				fprintf(tmp_file, "%s", line);
+			}
 		}
+		fclose(file);
+		fclose(tmp_file);
+		remove(".neogit/config");
+		rename(".neogit/tmp_config", ".neogit/config");
 	}
-	fclose(file);
-	fclose(tmp_file);
-	remove(".neogit/config");
-	rename(".neogit/tmp_config", ".neogit/config");
 }
 void update_localemail(char *new_eml)
 {
-	FILE *file = fopen(".neogit/config", "r");
-	if (file == NULL)
+	char cwd[1024];
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		return;
 
-	FILE *tmp_file = fopen(".neogit/tmp_config", "w");
-	if (tmp_file == NULL)
+	char tmp_cwd[1024];
+	bool exists = false;
+	struct dirent *entry;
+	do
 	{
-		fclose(file);
+		DIR *dir = opendir(".");
+		if (dir == NULL)
+		{
+			perror("Error opening current directory");
+			return;
+		}
+		while ((entry = readdir(dir)) != NULL)
+		{
+			if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
+				exists = true;
+		}
+		closedir(dir);
+
+		if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+			return;
+
+		if (strcmp(tmp_cwd, "/") != 0)
+		{
+			if (chdir("..") != 0)
+				return;
+		}
+
+	} while (strcmp(tmp_cwd, "/") != 0);
+
+	if (chdir(cwd) != 0)
+		return;
+
+	if (!exists)
+	{
+		perror("neogit has not been initialized");
 		return;
 	}
-	char line[1024];
-	while (fgets(line, sizeof(line), file) != NULL)
+	else
 	{
-		if (strncmp(line, "local email", 11) == 0)
+		FILE *file = fopen(".neogit/config", "r");
+		if (file == NULL)
+			return;
+
+		FILE *tmp_file = fopen(".neogit/tmp_config", "w");
+		if (tmp_file == NULL)
 		{
-			fprintf(tmp_file, "local email: %s\n", new_eml);
+			fclose(file);
+			return;
 		}
-		else
+		char line[1024];
+		while (fgets(line, sizeof(line), file) != NULL)
 		{
-			fprintf(tmp_file, "%s", line);
+			if (strncmp(line, "local email", 11) == 0)
+			{
+				fprintf(tmp_file, "local email: %s\n", new_eml);
+			}
+			else
+			{
+				fprintf(tmp_file, "%s", line);
+			}
 		}
+		fclose(file);
+		fclose(tmp_file);
+		remove(".neogit/config");
+		rename(".neogit/tmp_config", ".neogit/config");
 	}
-	fclose(file);
-	fclose(tmp_file);
-	remove(".neogit/config");
-	rename(".neogit/tmp_config", ".neogit/config");
 }

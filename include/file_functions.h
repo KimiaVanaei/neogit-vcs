@@ -35,7 +35,7 @@ bool check_file_directory_exists(char *filepath);
 int commit_staged_file(int commit_ID, char* filepath);
 bool is_tracked(char *filepath);
 int find_file_last_commit(char* filepath);
-int create_log_file(int commit_ID, char *message, char *time);
+int create_log_file(int commit_ID, char *message, char *time, char *branch, char *author);
 int track_file(char *filepath);
 int inc_last_commit_ID();
 int run_commit(int argc, char * const argv[]);
@@ -83,6 +83,17 @@ int printLogContentbyNum(int n);
 int printlastline();
 void filterCommitsSince(char *date);
 void filterCommitsBefore(char *date);
+int run_status();
+int isInLastCommits(char *filepath, int last_ID);
+long int getSavedModTime(char *filepath, int last_ID);
+int last_ID();
+char *currentAuthor();
+char *currentBranch();
+void printLogContentbyBranch(char *target_branch);
+void printLogContentbyAuthor(char *target_author);
+void printLogContentbyWord(char *target_word);
+
+
 
 
 

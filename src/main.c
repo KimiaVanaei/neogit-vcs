@@ -2,14 +2,17 @@
 
 int main(int argc, char *argv[])
 {
-    mayn();
     // if (argc >= 2) {
     //     if (check_and_replace_alias(argv[1]) != NULL)
     //     {
 
     //     }
     // }
-
+    if ((argc < 2))
+    {
+        printf("invalid command\n");
+        return 1;
+    }
     if ((argc == 2) && strcmp(argv[1], "init") == 0)
     {
         return run_init();
@@ -46,8 +49,13 @@ int main(int argc, char *argv[])
         char *newalias = dotPosition + 1;
         add_localalias(newalias, argv[3]);
     }
-    else if ((argc >= 2) && (strcmp(argv[1], "add") == 0) && ((strcmp(argv[2], "-f") != 0) && (strcmp(argv[2], "-n") != 0)))
+    else if ((argc >= 2) && (strcmp(argv[1], "add") == 0) && (strcmp(argv[2], "-n") != 0) && (strcmp(argv[2], "-f") != 0))
     {
+        if (argc < 3)
+        {
+            perror("please specify a file");
+            return -1;
+        }
         return run_add(argc, argv);
     }
     else if ((argc >= 3) && (strcmp(argv[1], "add") == 0) && (strcmp(argv[2], "-f") == 0))
@@ -202,7 +210,7 @@ int main(int argc, char *argv[])
         return printLogContentbyNum(n);
     }
     //neogit log-since <date>
-    else if ((argc == 4) && (strcmp(argv[1], "log") == 0))
+    else if ((argc == 4) && (strcmp(argv[1], "log") == 0) && (strcmp(argv[2], "-branch") != 0) && (strcmp(argv[2], "-author") != 0) && (strcmp(argv[2], "-search") != 0))
     {
         if (strcmp(argv[2] , "-since") == 0) {
            filterCommitsSince(argv[3]);
@@ -210,9 +218,28 @@ int main(int argc, char *argv[])
            filterCommitsBefore(argv[3]);
         }
     }
+    else if ((argc == 4) && (strcmp(argv[1], "log") == 0) && (strcmp(argv[2], "-branch") == 0))
+    {
+        char *branch = argv[3];
+        printLogContentbyBranch(branch);
+    }
+    else if ((argc == 4) && (strcmp(argv[1], "log") == 0) && (strcmp(argv[2], "-author") == 0))
+    {
+        char *author = argv[3];
+        printLogContentbyAuthor(author);
+    }
+    else if ((argc == 4) && (strcmp(argv[1], "log") == 0) && (strcmp(argv[2], "-search") == 0))
+    {
+        char *word = argv[3];
+        printLogContentbyWord(word);
+    }
     else if ((argc == 3) && (strcmp(argv[1], "reset") == 0) && (strcmp(argv[2], "-undo") == 0))
     {
         return printlastline();
+    }
+    else if ((argc == 2) && (strcmp(argv[1], "test") == 0))
+    {
+        return run_status();
     }
 
 

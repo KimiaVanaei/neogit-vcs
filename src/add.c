@@ -100,7 +100,7 @@ int run_add(int argc, char *const argv[])
 		perror("neogit has not been initialized");
 		return -1;
 	}
-	else {
+     else {
         if (argc < 3)
         {
             perror("please specify a file");
@@ -136,7 +136,7 @@ int run_add(int argc, char *const argv[])
             return add_to_staging(filePath);
         }
 
-	    // return add_to_staging(argv[2]);
-    }
+	 }
+
 }
 

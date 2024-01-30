@@ -334,7 +334,6 @@ int run_commit(int argc, char *const argv[])
 			return 1;
 		}
 
-		
 		FILE *file = fopen(".neogit/staging", "r");
 		if (file == NULL)
 			return 1;
@@ -352,6 +351,7 @@ int run_commit(int argc, char *const argv[])
 		if (commit_ID == -1)
 			return 1;
 		char line[1024];
+
 		while (fgets(line, sizeof(line), file) != NULL)
 		{
 			int length = strlen(line);
@@ -360,6 +360,7 @@ int run_commit(int argc, char *const argv[])
 			{
 				line[length - 1] = '\0';
 			}
+
 			// char *linecopy = strdup(line);
 
 			// char *slash_position = strchr(linecopy, '/');
@@ -395,15 +396,8 @@ int run_commit(int argc, char *const argv[])
 			// 	linecopy2 = strdup(lastSlash + 1);
 			// }
 			// printf("%s is linecopy2\n", linecopy2);
-			// char filePath[PATH_MAX];
-			// if (realpath(line, filePath) == NULL)
-			// {
-			// 	perror("realpath");
-			// 	exit(EXIT_FAILURE);
-			// }
-			printf("before passing to commiting-> %s\n", line);
 
-			// commit_staged_file(commit_ID, line); <<<<<<<
+			commit_staged_file(commit_ID, line); 
 			track_file(line);
 
 			// free(linecopy2);
@@ -414,7 +408,11 @@ int run_commit(int argc, char *const argv[])
 		struct tm *current_time = localtime(&t);
 		char time_str[50];
 		strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time);
-		create_log_file(commit_ID, message, time_str);
+		char *branch = (char*)malloc(50 * sizeof(char));;
+		char *author = (char*)malloc(50 * sizeof(char));;
+		branch = currentBranch();
+		author = currentAuthor();
+		create_log_file(commit_ID, message, time_str, branch, author);
 		file = fopen(".neogit/staging", "w");
 		if (file == NULL)
 			return 1;
@@ -479,33 +477,28 @@ bool check_file_directory_exists(char *branchname)
 
 int commit_staged_file(int commit_ID, char *filepath)
 {
-	FILE *read_file, *write_file;
-	char read_path[1024];
-	strcpy(read_path, filepath);
+
+	FILE *write_file;
 	char write_path[1024];
-	strcpy(write_path, ".neogit/branches/");
-	strcat(write_path, "master");
-	strcat(write_path, "/");
+	strcpy(write_path, ".neogit/commits/");
 	char tmp[10];
 	sprintf(tmp, "%d", commit_ID);
 	strcat(write_path, tmp);
 
-	read_file = fopen(read_path, "r");
-	if (read_file == NULL)
-		return 1;
-
-	write_file = fopen(write_path, "w");
+	write_file = fopen(write_path, "a+");
 	if (write_file == NULL)
 		return 1;
 
-	char buffer;
-	buffer = fgetc(read_file);
-	while (buffer != EOF)
+	struct stat file_info;
+
+	if (stat(filepath, &file_info) != 0)
 	{
-		fputc(buffer, write_file);
-		buffer = fgetc(read_file);
+		perror("Error getting file information");
+		return 1;
 	}
-	fclose(read_file);
+	time_t modification_time = file_info.st_mtime;
+
+	fprintf(write_file, "%s\t%ld\n",filepath, modification_time);
 	fclose(write_file);
 
 	return 0;
@@ -598,62 +591,64 @@ int create_log_file2(int commit_ID, char *message, char *time)
 	fclose(file);
 	return 0;
 }
-int create_log_file(int commit_ID, char *message, char *time)
+int create_log_file(int commit_ID, char *message, char *time, char *branch, char *author)
 {
-    char commit_filepath[1024];
-    strcpy(commit_filepath, ".neogit/commits/");
-    strcat(commit_filepath, "log");
+	char commit_filepath[1024];
+	strcpy(commit_filepath, ".neogit/commits/");
+	strcat(commit_filepath, "log");
 
-    FILE *file = fopen(commit_filepath, "a+");
-    if (file == NULL)
-        return 1;
+	FILE *file = fopen(commit_filepath, "a+");
+	if (file == NULL)
+		return 1;
 
-    // Read existing content
-    char existing_content[4096];
-    size_t existing_content_size = fread(existing_content, 1, sizeof(existing_content), file);
-    fseek(file, 0, SEEK_SET);
+	// Read existing content
+	char existing_content[4096];
+	size_t existing_content_size = fread(existing_content, 1, sizeof(existing_content), file);
+	fseek(file, 0, SEEK_SET);
 
-    // Open the file again in write mode to overwrite existing content
-    FILE *temp_file = fopen(".neogit/temp_log", "w");
-    if (temp_file == NULL)
-    {
-        fclose(file);
-        return 1;
-    }
+	// Open the file again in write mode to overwrite existing content
+	FILE *temp_file = fopen(".neogit/temp_log", "w");
+	if (temp_file == NULL)
+	{
+		fclose(file);
+		return 1;
+	}
 
-    // Write new log entry at the beginning
-    fprintf(temp_file, "commit ID: %d\n", commit_ID);
-    fprintf(temp_file, "message: %s\n", message);
+	// Write new log entry at the beginning
+	fprintf(temp_file, "commit ID: %d\n", commit_ID);
+	fprintf(temp_file, "author: %s\n", author);
+	fprintf(temp_file, "branch: %s\n", branch);
+	fprintf(temp_file, "message: %s\n", message);
 
-    int tedad = 0;
-    char ch;
-    FILE *stgfile = fopen(".neogit/staging", "r");
-    if (stgfile == NULL)
-    {
-        fclose(file);
-        fclose(temp_file);
-        return 1;
-    }
-    while ((ch = fgetc(stgfile)) != EOF)
-    {
-        if (ch == '\n')
-        {
-            tedad++;
-        }
-    }
-    fprintf(temp_file, "number of files committed: %d\n", tedad);
-    fprintf(temp_file, "operation done in : %s\n", time);
+	int tedad = 0;
+	char ch;
+	FILE *stgfile = fopen(".neogit/staging", "r");
+	if (stgfile == NULL)
+	{
+		fclose(file);
+		fclose(temp_file);
+		return 1;
+	}
+	while ((ch = fgetc(stgfile)) != EOF)
+	{
+		if (ch == '\n')
+		{
+			tedad++;
+		}
+	}
+	fprintf(temp_file, "number of files committed: %d\n", tedad);
+	fprintf(temp_file, "operation done in : %s\n", time);
 	fprintf(temp_file, "---------------------------------------\n");
-    fclose(stgfile);
+	fclose(stgfile);
 
-    // Append existing content after the new log entry
-    fwrite(existing_content, 1, existing_content_size, temp_file);
+	// Append existing content after the new log entry
+	fwrite(existing_content, 1, existing_content_size, temp_file);
 
-    // Close and rename the temporary file to the original log file
-    fclose(file);
-    fclose(temp_file);
-    remove(commit_filepath);
-    rename(".neogit/temp_log", commit_filepath);
+	// Close and rename the temporary file to the original log file
+	fclose(file);
+	fclose(temp_file);
+	remove(commit_filepath);
+	rename(".neogit/temp_log", commit_filepath);
 
-    return 0;
+	return 0;
 }
