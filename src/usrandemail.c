@@ -59,11 +59,13 @@ void update_username(char *new_usr)
 			return;
 
 		char line[1024];
+		time_t currentTime;
+		time(&currentTime);
 		while (fgets(line, sizeof(line), file) != NULL)
 		{
 			if (strncmp(line, "username", 8) == 0)
 			{
-				fprintf(tmp_file, "username: %s\n", new_usr);
+				fprintf(tmp_file, "username: %s\t%ld\n", new_usr, (long)currentTime);
 			}
 			else
 			{
@@ -132,11 +134,13 @@ void update_email(char *new_eml)
 			return;
 		}
 		char line[1024];
+		time_t currentTime;
+		time(&currentTime);
 		while (fgets(line, sizeof(line), file) != NULL)
 		{
 			if (strncmp(line, "email", 5) == 0)
 			{
-				fprintf(tmp_file, "email: %s\n", new_eml);
+				fprintf(tmp_file, "email: %s\t%ld\n", new_eml,(long)currentTime);
 			}
 			else
 			{

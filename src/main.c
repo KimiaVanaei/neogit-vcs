@@ -49,13 +49,12 @@ int main(int argc, char *argv[])
         char *newalias = dotPosition + 1;
         add_localalias(newalias, argv[3]);
     }
+    else if ((argc == 2) && (strcmp(argv[1], "add") == 0))
+    {
+        printf(RED "please specify a file\n" RESET);
+    }
     else if ((argc >= 2) && (strcmp(argv[1], "add") == 0) && (strcmp(argv[2], "-n") != 0) && (strcmp(argv[2], "-f") != 0))
     {
-        if (argc < 3)
-        {
-            perror("please specify a file");
-            return -1;
-        }
         return run_add(argc, argv);
     }
     else if ((argc >= 3) && (strcmp(argv[1], "add") == 0) && (strcmp(argv[2], "-f") == 0))
@@ -63,23 +62,74 @@ int main(int argc, char *argv[])
         for (int i = 3; i < argc; i++)
         {
             char filePath[PATH_MAX];
-			if (realpath(argv[i], filePath) == NULL)
-			{
-				printf("%s does not exist\n", argv[i]);
-				exit(EXIT_FAILURE);
-			}
-            
+            if (realpath(argv[i], filePath) == NULL)
+            {
+                printf("%s does not exist\n", argv[i]);
+                exit(EXIT_FAILURE);
+            }
+
             if (run_add_single(filePath) != 0)
                 fprintf(stderr, "Error processing: %s\n", argv[i]);
         }
     }
     else if ((argc >= 2) && strcmp(argv[1], "commit") == 0 && (strcmp(argv[2], "-s") != 0))
     {
-        return run_commit(argc, argv);
+        char *current_branch = (char *)malloc(50 * sizeof(char));
+        current_branch = currentBranch();
+        int HEAD = HEADorNOT();
+        if (HEAD == 0)
+        {
+            printf(RED "You can only commit on HEAD. Checkout to HEAD to commit\n" RESET);
+            return 1;
+        }
+        else
+        {
+            if (strcmp(current_branch, "master") == 0)
+            {
+                return run_commit(argc, argv);
+            }
+            else{
+                return run_commit_on_branch(argc, argv, current_branch);
+            }
+        }
     }
-    else if ((argc >= 2) && strcmp(argv[1], "checkout") == 0)
+    else if ((argc >= 2) && strcmp(argv[1], "checkout") == 0 && strcmp(argv[2], "HEAD") != 0)
     {
-        return run_checkout(argc, argv);
+        // char *current_branch = (char *)malloc(50 * sizeof(char));
+        // current_branch = currentBranch();
+        // if (strcmp(current_branch, "master") == 0)
+        // {
+            return run_checkout(argc, argv);
+        // }
+        // else
+        // {
+        //     int id = atoi(argv[2]);
+        //     return checkout_to_id_branch(current_branch, id);
+        // }
+    }
+    else if ((argc >= 2) && strcmp(argv[1], "checkoutbr") == 0)
+    {
+        char *branchname = argv[2];
+        change_branch_in_configs(branchname);
+        if (strcmp(branchname, "master") == 0)
+        {
+            return run_checkout_master(argc, argv);
+        }
+        return run_checkouttobranch(branchname);
+    }
+    else if ((argc == 3) && strcmp(argv[1], "checkout") == 0 && strcmp(argv[2], "HEAD") == 0)
+    {
+        char *current_branch = (char *)malloc(50 * sizeof(char));
+        current_branch = currentBranch();
+        if (strcmp(current_branch, "master") == 0)
+        {
+            return run_checkoutHEAD(argc, argv);
+        }
+        else
+        {
+            int id = atoi(argv[2]);
+            return run_checkoutHEAD_forbr(current_branch);
+        }
     }
     else if ((argc >= 2) && strcmp(argv[1], "reset") == 0 && (strcmp(argv[2], "-f") != 0) && (strcmp(argv[2], "-undo") != 0))
     {
@@ -90,21 +140,25 @@ int main(int argc, char *argv[])
     {
         for (int i = 3; i < argc; i++)
         {
-             char filePath[PATH_MAX];
-			if (realpath(argv[i], filePath) == NULL)
-			{
-				printf("%s does not exist\n", argv[i]);
-				exit(EXIT_FAILURE);
-			}
+            char filePath[PATH_MAX];
+            if (realpath(argv[i], filePath) == NULL)
+            {
+                printf("%s does not exist\n", argv[i]);
+                exit(EXIT_FAILURE);
+            }
             if (remove_from_staging(argv[i]) != 0)
                 fprintf(stderr, "Error processing: %s\n", argv[i]);
         }
+    }
+    else if ((argc == 3) && (strcmp(argv[1], "reset") == 0) && (strcmp(argv[2], "-undo") == 0))
+    {
+        return removeRecentStaged();
     }
     else if ((argc == 4) && (strcmp(argv[1], "add") == 0) && (strcmp(argv[2], "-n") == 0))
     {
         int depth = atoi(argv[3]);
         printf("%d\n", depth);
-        add_depth(".", depth-1);
+        add_depth(".", depth - 1);
     }
     // neogit set -m ”shortcut message” -s shortcut-name
     else if ((argc == 6) && (strcmp(argv[1], "set") == 0) && (strcmp(argv[2], "-m") == 0) && (strcmp(argv[4], "-s") == 0))
@@ -143,7 +197,7 @@ int main(int argc, char *argv[])
         fclose(file);
         return run_commit(argc, argv);
     }
-    //neogit replace -m ”new shortcut message” -s shortcut-name
+    // neogit replace -m ”new shortcut message” -s shortcut-name
     else if ((argc == 6) && (strcmp(argv[1], "replace") == 0) && (strcmp(argv[2], "-m") == 0) && (strcmp(argv[4], "-s") == 0))
     {
         FILE *file = fopen(".neogit/shortcuts_for_msgs", "r");
@@ -169,7 +223,7 @@ int main(int argc, char *argv[])
 
         update_msg(argv[3], argv[5]);
     }
-    //neogit remove -s shortcut-name
+    // neogit remove -s shortcut-name
     else if ((argc == 4) && (strcmp(argv[1], "remove") == 0) && (strcmp(argv[2], "-s") == 0))
     {
         FILE *file = fopen(".neogit/shortcuts_for_msgs", "r");
@@ -195,27 +249,25 @@ int main(int argc, char *argv[])
 
         delete_msg(argv[3]);
     }
-    else if ((argc == 2) && (strcmp(argv[1], "status") == 0))
-    {
-        printFileChanges() ;
-
-    }
     else if ((argc == 2) && (strcmp(argv[1], "log") == 0))
     {
-        return printLogContent() ;
+        return printLogContent();
     }
     else if ((argc == 3) && (strcmp(argv[1], "log") == 0))
     {
         int n = atoi(argv[2]);
         return printLogContentbyNum(n);
     }
-    //neogit log-since <date>
+    // neogit log-since <date>
     else if ((argc == 4) && (strcmp(argv[1], "log") == 0) && (strcmp(argv[2], "-branch") != 0) && (strcmp(argv[2], "-author") != 0) && (strcmp(argv[2], "-search") != 0))
     {
-        if (strcmp(argv[2] , "-since") == 0) {
-           filterCommitsSince(argv[3]);
-        } else if (strcmp(argv[2] , "-before") == 0) {
-           filterCommitsBefore(argv[3]);
+        if (strcmp(argv[2], "-since") == 0)
+        {
+            filterCommitsSince(argv[3]);
+        }
+        else if (strcmp(argv[2], "-before") == 0)
+        {
+            filterCommitsBefore(argv[3]);
         }
     }
     else if ((argc == 4) && (strcmp(argv[1], "log") == 0) && (strcmp(argv[2], "-branch") == 0))
@@ -228,20 +280,37 @@ int main(int argc, char *argv[])
         char *author = argv[3];
         printLogContentbyAuthor(author);
     }
-    else if ((argc == 4) && (strcmp(argv[1], "log") == 0) && (strcmp(argv[2], "-search") == 0))
+    else if ((argc >= 4) && (strcmp(argv[1], "log") == 0) && (strcmp(argv[2], "-search") == 0))
     {
-        char *word = argv[3];
-        printLogContentbyWord(word);
+        printLogContentbyWords(argv + 3, argc - 3);
     }
-    else if ((argc == 3) && (strcmp(argv[1], "reset") == 0) && (strcmp(argv[2], "-undo") == 0))
-    {
-        return printlastline();
-    }
-    else if ((argc == 2) && (strcmp(argv[1], "test") == 0))
+    else if ((argc == 2) && (strcmp(argv[1], "status") == 0))
     {
         return run_status();
     }
+    else if ((argc == 3) && (strcmp(argv[1], "branch") == 0))
+    {
+        char *branch_name = argv[2];
+        return run_branch(branch_name);
+    }
+    else if ((argc == 2) && (strcmp(argv[1], "branch") == 0))
+    {
+        printBranches();
+    }
+    else if ((argc == 3) && (strcmp(argv[1], "test") == 0))
+    {
+        printf("Entering 'test' block\n");
+        char *str = argv[2];
+        printf("String: %s\n", str);
+        printf("Before containsWildcard\n");
 
+        if (containsWildcard(str))
+        {
+            printf("Entering containsWildcard block\n");
+            identifyWordsWithWildcard(str);
+        }
+        printf("Leaving 'test' block\n");
+    }
 
     return 0;
 }

@@ -5,10 +5,14 @@ int run_checkout(int argc, char *const argv[])
 	char cwd[1024];
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		return 1;
+	char originalCwd[1024];
+	strcpy(originalCwd, cwd);
 
 	char tmp_cwd[1024];
-	bool exists = false;
+	char currentDir[1024];
+	bool foundNeogit = false;
 	struct dirent *entry;
+
 	do
 	{
 		DIR *dir = opendir(".");
@@ -17,11 +21,16 @@ int run_checkout(int argc, char *const argv[])
 			perror("Error opening current directory");
 			return 1;
 		}
+
 		while ((entry = readdir(dir)) != NULL)
 		{
 			if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
-				exists = true;
+			{
+				foundNeogit = true;
+				break;
+			}
 		}
+
 		closedir(dir);
 
 		if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
@@ -33,49 +42,132 @@ int run_checkout(int argc, char *const argv[])
 				return 1;
 		}
 
-	} while (strcmp(tmp_cwd, "/") != 0);
+	} while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
 
-	if (chdir(cwd) != 0)
-		return 1;
-
-	if (!exists)
+	if (!foundNeogit)
 	{
-		perror("neogit has not been initialized");
-		return -1;
+		printf("neogit has not been initialized\n");
+
+		return 1;
 	}
-	else {
- 
-	if (argc < 3)
-		return 1;
-
-	int commit_ID = atoi(argv[2]);
-
-	DIR *dir = opendir(".");
-	struct dirent *entry;
-	while ((entry = readdir(dir)) != NULL)
+	else
 	{
-		if (entry->d_type == DT_REG)
+		if (chdir(tmp_cwd) != 0)
 		{
-			char filePath[PATH_MAX];
-			if (realpath(entry->d_name, filePath) == NULL)
-			{
-				perror("realpath");
-				exit(EXIT_FAILURE);
-			}
-
-			if (is_tracked(filePath))
-			checkout_file(entry->d_name, find_file_last_change_before_commit(entry->d_name, commit_ID), filePath);
+			perror("Error changing directory");
+			return 1;
 		}
-	}
-	closedir(dir);
+		strcpy(currentDir, tmp_cwd);
+		if (chdir(cwd) != 0)
+			return 1;
 
-	return 0;
-	} 
+		if (argc < 3)
+			return 1;
+		char neoPath[PATH_MAX];
+		snprintf(neoPath, sizeof(neoPath), "%s/.neogit/staging", currentDir);
+		FILE *stgFile = fopen(neoPath, "r");
+		if (stgFile == NULL)
+		{
+			return 1;
+		}
+
+		fseek(stgFile, 0, SEEK_END);
+		long size = ftell(stgFile);	 
+		rewind(stgFile);
+
+		if (size != 0)
+		{
+			printf("You have uncommitted files. You can`t checkout\n");
+			return 1;
+		}
+		if (chdir(originalCwd) != 0)
+		{
+			perror("Error restoring original directory");
+			return 1;
+		}
+
+		int commit_ID = atoi(argv[2]);
+
+		DIR *dir = opendir(".");
+		struct dirent *entry;
+		while ((entry = readdir(dir)) != NULL)
+		{
+			if (entry->d_type == DT_REG)
+			{
+				char filePath[PATH_MAX];
+				if (realpath(entry->d_name, filePath) == NULL)
+				{
+					perror("realpath");
+					exit(EXIT_FAILURE);
+				}
+
+				if (is_tracked(filePath))
+					checkout_file(entry->d_name, find_file_last_change_before_commit(entry->d_name, commit_ID), filePath);
+			}
+		}
+		closedir(dir);
+		makeHEADzero_afterchkot_byID();
+
+		return 0;
+	}
 }
 
 bool is_tracked(char *filepath)
 {
-	FILE *file = fopen(".neogit/tracks", "r");
+	char cwd[1024];
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		return 1;
+
+	char tmp_cwd[1024];
+	char currentDir[1024];
+	bool foundNeogit = false;
+	struct dirent *entry;
+
+	do
+	{
+		DIR *dir = opendir(".");
+		if (dir == NULL)
+		{
+			perror("Error opening current directory");
+			return 1;
+		}
+
+		while ((entry = readdir(dir)) != NULL)
+		{
+			if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
+			{
+				foundNeogit = true;
+				break;
+			}
+		}
+
+		closedir(dir);
+
+		if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+			return 1;
+
+		if (strcmp(tmp_cwd, "/") != 0)
+		{
+			if (chdir("..") != 0)
+				return 1;
+		}
+
+	} while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+	if (foundNeogit)
+	{
+		if (chdir(tmp_cwd) != 0)
+		{
+			perror("Error changing directory");
+			return 1;
+		}
+		strcpy(currentDir, tmp_cwd);
+		if (chdir(cwd) != 0)
+			return 1;
+	}
+	char trPath[PATH_MAX];
+	snprintf(trPath, sizeof(trPath), "%s/.neogit/tracks", currentDir);
+	FILE *file = fopen(trPath, "r");
 	if (file == NULL)
 		return false;
 	char line[1024];
@@ -99,23 +191,81 @@ bool is_tracked(char *filepath)
 
 int find_file_last_change_before_commit(char *filename, int commit_ID)
 {
+	char cwd[1024];
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		return 1;
+
+	char tmp_cwd[1024];
+	char currentDir[1024];
+	bool foundNeogit = false;
+	struct dirent *entry;
+
+	do
+	{
+		DIR *dir = opendir(".");
+		if (dir == NULL)
+		{
+			perror("Error opening current directory");
+			return 1;
+		}
+
+		while ((entry = readdir(dir)) != NULL)
+		{
+			if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
+			{
+				foundNeogit = true;
+				break;
+			}
+		}
+
+		closedir(dir);
+
+		if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+			return 1;
+
+		if (strcmp(tmp_cwd, "/") != 0)
+		{
+			if (chdir("..") != 0)
+				return 1;
+		}
+
+	} while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+	if (foundNeogit)
+	{
+		if (chdir(tmp_cwd) != 0)
+		{
+			perror("Error changing directory");
+			return 1;
+		}
+		strcpy(currentDir, tmp_cwd);
+		if (chdir(cwd) != 0)
+			return 1;
+	}
+	char filPath[PATH_MAX];
+	snprintf(filPath, sizeof(filPath), "%s/.neogit/all_files/", currentDir);
 	char filepath_dir[1024];
-	strcpy(filepath_dir, ".neogit/files/");
+	strcpy(filepath_dir, filPath);
 	strcat(filepath_dir, filename);
 	strcat(filepath_dir, "/");
-
 
 	int max = -1;
 
 	DIR *dir = opendir(filepath_dir);
-	struct dirent *entry;
+	struct dirent *entry2;
 	if (dir == NULL)
 		return 1;
 
-	while ((entry = readdir(dir)) != NULL && (max <commit_ID))
+	while ((entry2 = readdir(dir)) != NULL)
 	{
-			int tmp = atoi(entry->d_name);
+		if (entry2->d_type == DT_REG)
+		{
+			int tmp = atoi(entry2->d_name);
+			if (tmp > max && tmp <= commit_ID)
+			{
 				max = tmp;
+			}
+		}
 	}
 	closedir(dir);
 
@@ -124,8 +274,61 @@ int find_file_last_change_before_commit(char *filename, int commit_ID)
 
 int checkout_file(char *filename, int commit_ID, char *filepath)
 {
+	char cwd[1024];
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		return 1;
+
+	char tmp_cwd[1024];
+	char currentDir[1024];
+	bool foundNeogit = false;
+	struct dirent *entry;
+
+	do
+	{
+		DIR *dir = opendir(".");
+		if (dir == NULL)
+		{
+			perror("Error opening current directory");
+			return 1;
+		}
+
+		while ((entry = readdir(dir)) != NULL)
+		{
+			if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
+			{
+				foundNeogit = true;
+				break;
+			}
+		}
+
+		closedir(dir);
+
+		if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+			return 1;
+
+		if (strcmp(tmp_cwd, "/") != 0)
+		{
+			if (chdir("..") != 0)
+				return 1;
+		}
+
+	} while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+	if (foundNeogit)
+	{
+		if (chdir(tmp_cwd) != 0)
+		{
+			perror("Error changing directory");
+			return 1;
+		}
+		strcpy(currentDir, tmp_cwd);
+		if (chdir(cwd) != 0)
+			return 1;
+	}
+	char filPath[PATH_MAX];
+	snprintf(filPath, sizeof(filPath), "%s/.neogit/files/", currentDir);
 	char src_file[1024];
-	strcpy(src_file, ".neogit/files/");
+	strcpy(src_file, filPath);
 	strcat(src_file, filename);
 	char tmp[10];
 	sprintf(tmp, "/%d", commit_ID);

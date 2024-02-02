@@ -13,7 +13,56 @@ struct CommitInfo
 
 int printLogContent()
 {
-    FILE *file = fopen(".neogit/commits/log", "r");
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        return 1;
+
+    char tmp_cwd[1024];
+    char currentDir[1024];
+    bool foundNeogit = false;
+    struct dirent *entry;
+
+    do {
+        DIR *dir = opendir(".");
+        if (dir == NULL) {
+            perror("Error opening current directory");
+            return 1;
+        }
+
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0) {
+                foundNeogit = true;
+                break;
+            }
+        }
+
+        closedir(dir);
+
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return 1;
+
+        if (strcmp(tmp_cwd, "/") != 0) {
+            if (chdir("..") != 0)
+                return 1;
+        }
+
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    if (foundNeogit) {
+        if (chdir(tmp_cwd) != 0) {
+            perror("Error changing directory");
+            return 1;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+		return 1;
+    } else{
+        printf("neogit has not initialized\n");
+        return 1;
+    }
+	char logPath[PATH_MAX];
+    snprintf(logPath, sizeof(logPath), "%s/.neogit/commits/log", currentDir);
+    FILE *file = fopen(logPath, "r");
     if (file == NULL)
     {
         perror("Error opening file");
@@ -34,7 +83,56 @@ int printLogContentbyNum(int n)
     char line[100];
     struct CommitInfo commits[1000];
     int numCommits = 0;
-    FILE *file = fopen(".neogit/commits/log", "r");
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        return 1;
+
+    char tmp_cwd[1024];
+    char currentDir[1024];
+    bool foundNeogit = false;
+    struct dirent *entry;
+
+    do {
+        DIR *dir = opendir(".");
+        if (dir == NULL) {
+            perror("Error opening current directory");
+            return 1;
+        }
+
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0) {
+                foundNeogit = true;
+                break;
+            }
+        }
+
+        closedir(dir);
+
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return 1;
+
+        if (strcmp(tmp_cwd, "/") != 0) {
+            if (chdir("..") != 0)
+                return 1;
+        }
+
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    if (foundNeogit) {
+        if (chdir(tmp_cwd) != 0) {
+            perror("Error changing directory");
+            return 1;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+		return 1;
+    } else{
+        printf("neogit has not initialized\n");
+        return 1;
+    }
+	char logPath[PATH_MAX];
+    snprintf(logPath, sizeof(logPath), "%s/.neogit/commits/log", currentDir);
+    FILE *file = fopen(logPath, "r");
     if (file == NULL)
     {
         perror("Error opening file");
@@ -82,7 +180,56 @@ void filterCommitsSince(char *date)
     char line[100];
     struct CommitInfo commits[1000];
     int numCommits = 0;
-    FILE *file = fopen(".neogit/commits/log", "r");
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        return ;
+
+    char tmp_cwd[1024];
+    char currentDir[1024];
+    bool foundNeogit = false;
+    struct dirent *entry;
+
+    do {
+        DIR *dir = opendir(".");
+        if (dir == NULL) {
+            perror("Error opening current directory");
+            return ;
+        }
+
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0) {
+                foundNeogit = true;
+                break;
+            }
+        }
+
+        closedir(dir);
+
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return ;
+
+        if (strcmp(tmp_cwd, "/") != 0) {
+            if (chdir("..") != 0)
+                return ;
+        }
+
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    if (foundNeogit) {
+        if (chdir(tmp_cwd) != 0) {
+            perror("Error changing directory");
+            return ;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+		return ;
+    } else{
+        printf("neogit has not initialized\n");
+        return;
+    }
+	char logPath[PATH_MAX];
+    snprintf(logPath, sizeof(logPath), "%s/.neogit/commits/log", currentDir);
+    FILE *file = fopen(logPath, "r");
     if (file == NULL)
     {
         perror("Error opening file");
@@ -136,7 +283,56 @@ void filterCommitsBefore(char *date)
     char line[100];
     struct CommitInfo commits[1000];
     int numCommits = 0;
-    FILE *file = fopen(".neogit/commits/log", "r");
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        return ;
+
+    char tmp_cwd[1024];
+    char currentDir[1024];
+    bool foundNeogit = false;
+    struct dirent *entry;
+
+    do {
+        DIR *dir = opendir(".");
+        if (dir == NULL) {
+            perror("Error opening current directory");
+            return ;
+        }
+
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0) {
+                foundNeogit = true;
+                break;
+            }
+        }
+
+        closedir(dir);
+
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return ;
+
+        if (strcmp(tmp_cwd, "/") != 0) {
+            if (chdir("..") != 0)
+                return ;
+        }
+
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    if (foundNeogit) {
+        if (chdir(tmp_cwd) != 0) {
+            perror("Error changing directory");
+            return ;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+		return ;
+    } else{
+        printf("neogit has not initialized\n");
+        return;
+    }
+	char logPath[PATH_MAX];
+    snprintf(logPath, sizeof(logPath), "%s/.neogit/commits/log", currentDir);
+    FILE *file = fopen(logPath, "r");
     if (file == NULL)
     {
         perror("Error opening file");
@@ -189,7 +385,56 @@ void printLogContentbyAuthor(char *target_author)
     char line[100];
     struct CommitInfo commits[1000];
     int numCommits = 0;
-    FILE *file = fopen(".neogit/commits/log", "r");
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        return ;
+
+    char tmp_cwd[1024];
+    char currentDir[1024];
+    bool foundNeogit = false;
+    struct dirent *entry;
+
+    do {
+        DIR *dir = opendir(".");
+        if (dir == NULL) {
+            perror("Error opening current directory");
+            return ;
+        }
+
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0) {
+                foundNeogit = true;
+                break;
+            }
+        }
+
+        closedir(dir);
+
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return ;
+
+        if (strcmp(tmp_cwd, "/") != 0) {
+            if (chdir("..") != 0)
+                return ;
+        }
+
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    if (foundNeogit) {
+        if (chdir(tmp_cwd) != 0) {
+            perror("Error changing directory");
+            return ;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+		return ;
+    } else{
+        printf("neogit has not initialized\n");
+        return;
+    }
+	char logPath[PATH_MAX];
+    snprintf(logPath, sizeof(logPath), "%s/.neogit/commits/log", currentDir);
+    FILE *file = fopen(logPath, "r");
     if (file == NULL)
     {
         perror("Error opening file");
@@ -235,7 +480,56 @@ void printLogContentbyBranch(char *target_branch)
     char line[100];
     struct CommitInfo commits[1000];
     int numCommits = 0;
-    FILE *file = fopen(".neogit/commits/log", "r");
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        return ;
+
+    char tmp_cwd[1024];
+    char currentDir[1024];
+    bool foundNeogit = false;
+    struct dirent *entry;
+
+    do {
+        DIR *dir = opendir(".");
+        if (dir == NULL) {
+            perror("Error opening current directory");
+            return ;
+        }
+
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0) {
+                foundNeogit = true;
+                break;
+            }
+        }
+
+        closedir(dir);
+
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return ;
+
+        if (strcmp(tmp_cwd, "/") != 0) {
+            if (chdir("..") != 0)
+                return ;
+        }
+
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    if (foundNeogit) {
+        if (chdir(tmp_cwd) != 0) {
+            perror("Error changing directory");
+            return ;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+		return ;
+    } else{
+        printf("neogit has not initialized\n");
+        return;
+    }
+	char logPath[PATH_MAX];
+    snprintf(logPath, sizeof(logPath), "%s/.neogit/commits/log", currentDir);
+    FILE *file = fopen(logPath, "r");
     if (file == NULL)
     {
         perror("Error opening file");
@@ -276,12 +570,62 @@ void printLogContentbyBranch(char *target_branch)
     }
 }
 
-void printLogContentbyWord(char *target_word)
+void printLogContentbyWords(char **target_words, int num_words)
 {
     char line[100];
     struct CommitInfo commits[1000];
     int numCommits = 0;
-    FILE *file = fopen(".neogit/commits/log", "r");
+
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        return ;
+
+    char tmp_cwd[1024];
+    char currentDir[1024];
+    bool foundNeogit = false;
+    struct dirent *entry;
+
+    do {
+        DIR *dir = opendir(".");
+        if (dir == NULL) {
+            perror("Error opening current directory");
+            return ;
+        }
+
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0) {
+                foundNeogit = true;
+                break;
+            }
+        }
+
+        closedir(dir);
+
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return ;
+
+        if (strcmp(tmp_cwd, "/") != 0) {
+            if (chdir("..") != 0)
+                return ;
+        }
+
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    if (foundNeogit) {
+        if (chdir(tmp_cwd) != 0) {
+            perror("Error changing directory");
+            return ;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+		return ;
+    } else{
+        printf("neogit has not initialized\n");
+        return;
+    }
+	char logPath[PATH_MAX];
+    snprintf(logPath, sizeof(logPath), "%s/.neogit/commits/log", currentDir);
+    FILE *file = fopen(logPath, "r");
     if (file == NULL)
     {
         perror("Error opening file");
@@ -309,20 +653,30 @@ void printLogContentbyWord(char *target_word)
 
     for (int i = 0; i < numCommits; ++i)
     {
-        char *ptr = commits[i].message;
-        int found = 0;
+        int found_any_word = 0;
 
-        while ((ptr = strstr(ptr, target_word)) != NULL)
+        for (int j = 0; j < num_words; ++j)
         {
-            // Check if the found substring is a whole word
-            if ((ptr == commits[i].message || !isalpha(ptr[-1])) && (!isalpha(ptr[strlen(target_word)]) || ptr[strlen(target_word)] == '\0'))
+            char *ptr = commits[i].message;
+
+            while ((ptr = strstr(ptr, target_words[j])) != NULL)
             {
-               found = 1;
+                if ((ptr == commits[i].message || !isalpha(ptr[-1])) &&
+                    (!isalpha(ptr[strlen(target_words[j])]) || ptr[strlen(target_words[j])] == '\0'))
+                {
+                    found_any_word = 1;
+                    break;  // No need to check further if one word is found
+                }
+                ptr++;
             }
-            ptr++;
+
+            if (found_any_word)
+            {
+                break;  // No need to check further if any word is found
+            }
         }
 
-        if (found)
+        if (found_any_word)
         {
             printf("Commit ID: %d\n", commits[i].commitID);
             printf("Author: %s\n", commits[i].author);

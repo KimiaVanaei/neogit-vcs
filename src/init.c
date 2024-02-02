@@ -9,14 +9,17 @@ int create_configs(char *username, char *email)
 	fprintf(file, "local username: %s\n", username);
 	fprintf(file, "local email: %s\n", email);
 	fprintf(file, "last_commit_ID: %d\n", 0);
-	fprintf(file, "current_commit_ID: %d\n", 0);
-	fprintf(file, "branch: %s", "master");
+	fprintf(file, "HEAD(1 means u are in HEAD) %d\n", 1);
+	fprintf(file, "branch: %s\n", "master");
+	fprintf(file, "last_id_total: %d\n", 0);
 	fclose(file);
 
 	if (mkdir(".neogit/commits", 0755) != 0)
 		return 1;
 
 	if (mkdir(".neogit/files", 0755) != 0)
+		return 1;
+	if (mkdir(".neogit/all_files", 0755) != 0)
 		return 1;
 	if (mkdir(".neogit/branches", 0755) != 0)
 		return 1;
@@ -31,15 +34,13 @@ int create_configs(char *username, char *email)
 	if (file3 == NULL)
 		return 1;
 	fclose(file3);
-	FILE *file4 = fopen(".neogit/global_aliases", "w");
-	if (file4 == NULL)
-		return 1;
-	fclose(file4);
+
 	FILE *file5 = fopen(".neogit/shortcuts_for_msgs", "w");
 	if (file5 == NULL)
 		return 1;
 	fclose(file5);
-	FILE *file6 = fopen(".neogit/mods", "w");
+
+	FILE *file6 = fopen(".neogit/tags", "w");
 	if (file6 == NULL)
 		return 1;
 	fclose(file6);

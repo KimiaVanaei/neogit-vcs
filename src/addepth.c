@@ -2,37 +2,154 @@
 
 int isStaged(const char *filename)
 {
-    FILE *stagingFile = fopen(".neogit/staging", "r");
-    if (stagingFile == NULL)
-    {
-        perror("Error opening staging file");
-        return 0;
-    }
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        return 1;
+    char originalCwd[1024];
+    strcpy(originalCwd, cwd);
 
-    char line[1024];
-    while (fgets(line, sizeof(line), stagingFile) != NULL)
-    {
-        int length = strlen(line);
+    char tmp_cwd[1024];
+    char currentDir[1024];
+    bool foundNeogit = false;
+    struct dirent *entry;
 
-        if (length > 0 && line[length - 1] == '\n')
+    do
+    {
+        DIR *dir = opendir(".");
+        if (dir == NULL)
         {
-            line[length - 1] = '\0';
+            perror("Error opening current directory");
+            return 0;
         }
 
-        // Check if the filename is a substring of the line
-        if (strstr(line, filename) != NULL)
+        while ((entry = readdir(dir)) != NULL)
         {
-            fclose(stagingFile);
-            return 1; // Staged
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
+            {
+                foundNeogit = true;
+                break;
+            }
         }
-    }
 
-    fclose(stagingFile);
+        closedir(dir);
+
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return 0;
+
+        if (strcmp(tmp_cwd, "/") != 0)
+        {
+            if (chdir("..") != 0)
+                return 0;
+        }
+
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    if (foundNeogit)
+    {
+        if (chdir(tmp_cwd) != 0)
+        {
+            perror("Error changing directory");
+            return 0;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+            return 0;
+        char stgPath[PATH_MAX];
+        snprintf(stgPath, sizeof(stgPath), "%s/.neogit/staging", currentDir);
+        FILE *stagingFile = fopen(stgPath, "r");
+        if (stagingFile == NULL)
+        {
+            perror("Error opening staging file");
+            return 0;
+        }
+
+        char line[1024];
+        while (fgets(line, sizeof(line), stagingFile) != NULL)
+        {
+            int length = strlen(line);
+
+            if (length > 0 && line[length - 1] == '\n')
+            {
+                line[length - 1] = '\0';
+            }
+
+            // Check if the filename is a substring of the line
+            if (strstr(line, filename) != NULL)
+            {
+                fclose(stagingFile);
+                return 1; // Staged
+            }
+        }
+        if (chdir(originalCwd) != 0)
+        {
+            perror("Error restoring original directory");
+            return 1;
+        }
+        fclose(stagingFile);
+    }
     return 0; // Not staged
 }
 
 int add_depth(const char *currentDir, int depth)
 {
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        return 1;
+    char originalCwd[1024];
+    strcpy(originalCwd, cwd);
+
+    char tmp_cwd[1024];
+
+    bool foundNeogit = false;
+    struct dirent *entry1;
+
+    do
+    {
+        DIR *dir1 = opendir(".");
+        if (dir1 == NULL)
+        {
+            perror("Error opening current directory");
+            return 0;
+        }
+
+        while ((entry1 = readdir(dir1)) != NULL)
+        {
+            if (entry1->d_type == DT_DIR && strcmp(entry1->d_name, ".neogit") == 0)
+            {
+                foundNeogit = true;
+                break;
+            }
+        }
+
+        closedir(dir1);
+
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return 0;
+
+        if (strcmp(tmp_cwd, "/") != 0)
+        {
+            if (chdir("..") != 0)
+                return 0;
+        }
+
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    if (!foundNeogit)
+    {
+        printf("neogit has not been initialized\n");
+        return 0;
+    }
+    if (chdir(originalCwd) != 0)
+    {
+        perror("Error restoring original directory");
+        return 0;
+    }
+    int set = configs_are_set();
+    if (!set)
+    {
+        printf("Please set local or global configs first\n");
+        return 0;
+    }
     DIR *dir;
     struct dirent *entry;
 

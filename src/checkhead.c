@@ -1,8 +1,8 @@
 #include "file_functions.h"
 
-void update_localusername(char *new_usr)
+void makeHEADzero_afterchkot_byID()
 {
-	char cwd[1024];
+    char cwd[1024];
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		return;
 
@@ -67,13 +67,11 @@ void update_localusername(char *new_usr)
 		return;
 
 	char line[1024];
-	time_t currentTime;
-	time(&currentTime);
-	while (fgets(line, sizeof(line), file) != NULL)
+    while (fgets(line, sizeof(line), file) != NULL)
 	{
-		if (strncmp(line, "local username", 14) == 0)
+		if (strncmp(line, "HEAD(1 means u are in HEAD)", 27) == 0)
 		{
-			fprintf(tmp_file, "local username: %s\t%ld\n", new_usr, (long)currentTime);
+			fprintf(tmp_file, "HEAD(1 means u are in HEAD) %d\n", 0);
 		}
 		else
 		{
@@ -85,9 +83,11 @@ void update_localusername(char *new_usr)
 	remove(confPath);
 	rename(tmpconfPath, confPath);
 }
-void update_localemail(char *new_eml)
+
+
+void makeHEADone_aftergoing_head()
 {
-	char cwd[1024];
+    char cwd[1024];
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		return;
 
@@ -150,14 +150,13 @@ void update_localemail(char *new_eml)
 	FILE *tmp_file = fopen(tmpconfPath, "w");
 	if (tmp_file == NULL)
 		return;
+
 	char line[1024];
-	time_t currentTime;
-	time(&currentTime);
-	while (fgets(line, sizeof(line), file) != NULL)
+    while (fgets(line, sizeof(line), file) != NULL)
 	{
-		if (strncmp(line, "local email", 11) == 0)
+		if (strncmp(line, "HEAD(1 means u are in HEAD)", 27) == 0)
 		{
-			fprintf(tmp_file, "local email: %s\t%ld\n", new_eml, (long)currentTime);
+			fprintf(tmp_file, "HEAD(1 means u are in HEAD) %d\n", 1);
 		}
 		else
 		{
@@ -168,4 +167,79 @@ void update_localemail(char *new_eml)
 	fclose(tmp_file);
 	remove(confPath);
 	rename(tmpconfPath, confPath);
+}
+
+
+int HEADorNOT()
+{
+    char cwd[1024];
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		return -1;
+
+	char tmp_cwd[1024];
+	char currentDir[1024];
+	bool foundNeogit = false;
+	struct dirent *entry;
+
+	do
+	{
+		DIR *dir = opendir(".");
+		if (dir == NULL)
+		{
+			perror("Error opening current directory");
+			return -1;
+		}
+
+		while ((entry = readdir(dir)) != NULL)
+		{
+			if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
+			{
+				foundNeogit = true;
+				break;
+			}
+		}
+
+		closedir(dir);
+
+		if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+			return -1;
+
+		if (strcmp(tmp_cwd, "/") != 0)
+		{
+			if (chdir("..") != 0)
+				return -1;
+		}
+
+	} while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+	if (foundNeogit)
+	{
+		
+        if (chdir(tmp_cwd) != 0)
+        {
+            perror("Error changing directory");
+            return -1;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+            return -1;
+        char confPath[PATH_MAX];
+        snprintf(confPath, sizeof(confPath), "%s/.neogit/config", currentDir);
+        FILE *file = fopen(confPath, "r");
+        if (file == NULL)
+            return -1;
+            int HEAD;
+        
+        char line[1024];
+        while (fgets(line, sizeof(line), file) != NULL)
+        {
+            if (strncmp(line, "HEAD(1 means u are in HEAD)", 27) == 0)
+            {
+                sscanf(line, "HEAD(1 means u are in HEAD) %d\n", &HEAD);
+            }
+        }
+        fclose(file);
+        return HEAD;
+    }
+
 }
