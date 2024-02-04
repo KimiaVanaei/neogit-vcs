@@ -154,15 +154,18 @@ int removeRecentStaged()
 	 snprintf(stgPath, sizeof(stgPath), "%s/.neogit/staging", currentDir);
     const char *staging_file_path = stgPath;
 
-    FILE *staging_file = fopen(staging_file_path, "r");
+    char tmpstgPath[PATH_MAX];
+	snprintf(tmpstgPath, sizeof(tmpstgPath), "%s/.neogit/staging_temp", currentDir);
+    
+    long int maxTime = 0;
+    char line[1024];
+     FILE *staging_file = fopen(staging_file_path, "r");
     if (staging_file == NULL)
     {
         perror("Error opening staging file");
         return 1;
     }
-    char tmpstgPath[PATH_MAX];
-	snprintf(tmpstgPath, sizeof(tmpstgPath), "%s/.neogit/staging_temp", currentDir);
-    FILE *temp_file = fopen(tmpstgPath, "w");
+      FILE *temp_file = fopen(tmpstgPath, "w");
     if (temp_file == NULL)
     {
         perror("Error creating temporary file");
@@ -170,26 +173,23 @@ int removeRecentStaged()
         return 1;
     }
 
-    char currentLine[1024];
-    char firstLine[1024];
-    long int firstLineNumber = 0;
-
-    // Read the first line
-    if (fgets(firstLine, sizeof(firstLine), staging_file) != NULL) {
-        sscanf(firstLine, "%*s %ld", &firstLineNumber);
-    } else {
-        fprintf(stderr, "Error reading the first line\n");
-        fclose(staging_file);
-        fclose(temp_file);
-        return 1;
+    // Read each line in the file
+    while (fgets(line, sizeof(line), staging_file)) {
+        long int currentTime;
+        long int savedModTime;
+        sscanf(line,"%*s\t%ld\t%ld", &savedModTime, &currentTime);
+        if (currentTime > maxTime) {
+            maxTime = currentTime;
+        }
     }
-
-    // Process the remaining lines
+ fseek(staging_file, 0, SEEK_SET);
+    char currentLine[1024];
     while (fgets(currentLine, sizeof(currentLine), staging_file) != NULL) {
-        long int currentLineNumber;
-        sscanf(currentLine, "%*s %ld", &currentLineNumber);
+        long int currentTime;
+        long int savedModTime;
+        sscanf(currentLine,"%*s\t%ld\t%ld", &savedModTime, &currentTime);
 
-        if (currentLineNumber != firstLineNumber) {
+        if (currentTime != maxTime) {
             fprintf(temp_file, "%s", currentLine);
         }
         // Otherwise, skip the line

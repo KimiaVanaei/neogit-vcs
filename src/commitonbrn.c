@@ -94,7 +94,8 @@ int run_commit_on_branch(int argc, char *const argv[], char *branchname)
 		int commit_ID = inc_last_commit_ID_total();
 		if (commit_ID == -1)
 			return 1;
-		inc_last_commit_ID_ofbrn(branchname);
+        change_current_ID(commit_ID);    // total
+		change_last_commit_ID_ofbrn(branchname, commit_ID); // for branch
 		char line[1024];
 
 		while (fgets(line, sizeof(line), file) != NULL)
@@ -125,7 +126,9 @@ int run_commit_on_branch(int argc, char *const argv[], char *branchname)
 			// }
 			char line1[1024];
 			sscanf(line, "%s", line1);
-			commit_staged_file(commit_ID, line1);
+			long int modtime;
+            sscanf(line, "%*s\t%ld", &modtime);
+			commit_staged_file(commit_ID, line1, modtime);
 			saveContent_for_branch(commit_ID, line1, fileName, branchname);
 			saveContent_total(commit_ID, line1, fileName);
 			track_file(line1); 
@@ -154,7 +157,7 @@ int run_commit_on_branch(int argc, char *const argv[], char *branchname)
 	}
 }
 
-void inc_last_commit_ID_ofbrn(char *branchname)
+void change_last_commit_ID_ofbrn(char *branchname, int new_id)
 {
 	char cwd[1024];
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
@@ -216,15 +219,13 @@ void inc_last_commit_ID_ofbrn(char *branchname)
 		FILE *tmp_file = fopen(tmpconfPath, "w");
 		if (tmp_file == NULL)
 			return ;
-		int last_commit_ID_ofbrn;
+	
 		char line[1024];
 		while (fgets(line, sizeof(line), file) != NULL)
 		{
 			if (strncmp(line, branchname, strlen(branchname)) == 0)
 			{
-				sscanf(line, "%*s %d\n", &last_commit_ID_ofbrn);
-				last_commit_ID_ofbrn++;
-				fprintf(tmp_file, "%s %d\n",branchname, last_commit_ID_ofbrn);
+				fprintf(tmp_file, "%s %d\n",branchname, new_id);
 			}
 			else
 				fprintf(tmp_file, "%s", line);

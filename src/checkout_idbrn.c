@@ -1,6 +1,6 @@
 #include "file_functions.h"
 
-int checkout_to_id_branch(char *branchname, int commit_ID)
+int checkout_to_id_branch(char *branchname, int target_ID)
 {
 	char cwd[1024];
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
@@ -93,17 +93,16 @@ int checkout_to_id_branch(char *branchname, int commit_ID)
 				}
 
 				if (is_tracked(filePath))
-					checkout_file_to_id_branch(entry->d_name, filePath, branchname, commit_ID);
+					checkout_file_to_id_branch(entry->d_name, filePath, branchname, target_ID);
 			}
 		}
 		closedir(dir);
         makeHEADzero_afterchkot_byID();
-
 		return 0;
 	}
 }
 
-int checkout_file_to_id_branch(char *filename, char *filepath, char *branchname, int commit_ID)
+int checkout_file_to_id_branch(char *filename, char *filepath, char *branchname, int target_ID)
 {
     char cwd[1024];
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
@@ -157,22 +156,37 @@ int checkout_file_to_id_branch(char *filename, char *filepath, char *branchname,
 			return 1;
 	
 	char filPath[PATH_MAX];
+	char target_path[PATH_MAX];
 	snprintf(filPath, sizeof(filPath), "%s/.neogit/branches/", currentDir);
     strcat(filPath, branchname);
-    char tmp[10];
-	sprintf(tmp, "/%d", commit_ID);
-
-    char src_file[1024];
-    strcpy(src_file, filPath);
-	strcat(src_file, tmp);
-	strcat(src_file, "/");
-    strcat(src_file, filename);
+    strcat(filPath, "/");
+	// printf("%s\n", filPath);       // /mnt/c/c_test/proj/.neogit/branches/bery/                                                         
+	char branchDir[PATH_MAX];
+	strcpy(branchDir, filPath);
+	DIR *dir2 = opendir(branchDir);
 	
+	int count = 0;
+	struct dirent* entry2;
+	while ((entry2 = readdir(dir2)) != NULL) {
+        if (entry2->d_type == DT_DIR && strcmp(entry2->d_name , ".") != 0 && strcmp(entry2->d_name , "..") != 0) {
+            count++;
+            if (count == target_ID) {
+				strcpy(target_path, branchDir);
+				strcat(target_path, entry2->d_name);
+                strcat(target_path, "/");
+                break;
+            }
+        }
+    }
+    closedir(dir2);
+	// printf("%s\n", target_path);          // /mnt/c/c_test/proj/.neogit/branches/hihi/2/
+    char src_file[1024];
+    strcpy(src_file, target_path);
+    strcat(src_file, filename);
 	FILE *read_file = fopen(src_file, "r");
 	if (read_file == NULL) return 1;
 	FILE *write_file = fopen(filepath, "w");
-	if (write_file == NULL)
-		return 1;
+	if (write_file == NULL) return 1;
 	char line2[1024];
 	while (fgets(line2, sizeof(line2), read_file) != NULL)
 	{

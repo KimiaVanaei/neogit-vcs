@@ -37,8 +37,8 @@ int run_status()
             }
             time_t modification_time = file_info.st_mtime;
 
-            int last_commit_ID = last_ID();
-            if (last_commit_ID == 0)
+            int curr_commit_ID = extract_current_ID();
+            if (curr_commit_ID == 0)
             {
                     if (isStaged(filePath))
                     {
@@ -62,7 +62,7 @@ int run_status()
             else
             {
 
-                int res = isInLastCommits(filePath, last_commit_ID);
+                int res = isInLastCommits(filePath, curr_commit_ID);
 
                 if (res == -1)
                     return 0;
@@ -89,7 +89,7 @@ int run_status()
                 }
                 else if (res == 1)
                 {
-                    long int savedModTime = getSavedModTime(filePath, last_commit_ID);
+                    long int savedModTime = getSavedModTime(filePath, curr_commit_ID);
 
                     if (savedModTime != modification_time)
                     {
@@ -386,7 +386,8 @@ long int getSavedModTime_fromstg(char *filepath)
             }
             char stored_path[1024];
             long int savedModTime;
-            if (sscanf(line, "%s %ld", stored_path, &savedModTime) == 2 && strcmp(stored_path, filepath) == 0)
+            long int savedTime;
+            if (sscanf(line, "%s %ld %ld", stored_path, &savedModTime, &savedTime) == 3 && strcmp(stored_path, filepath) == 0)
             {
                 fclose(fptr);
                 if (chdir(originalCwd) != 0)

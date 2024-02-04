@@ -61,10 +61,18 @@ int add_to_staging(char *filepath)
     char neoPath[PATH_MAX];
     snprintf(neoPath, sizeof(neoPath), "%s/.neogit/staging", currentDir);
 
-    FILE *file = fopen(neoPath, "r");
+    FILE *file = fopen(neoPath, "r+");
     if (file == NULL)
         return 1;
     char line[1024];
+    int found = 0;
+    struct stat file_info;
+            if (stat(filepath, &file_info) != 0)
+            {
+                perror("Error getting file information");
+                return 1;
+            }
+    time_t modification_time = file_info.st_mtime;
     while (fgets(line, sizeof(line), file) != NULL)
     {
         int length = strlen(line);
@@ -76,18 +84,35 @@ int add_to_staging(char *filepath)
         char line1[1024];
         sscanf(line, "%s",line1 );
 
-        if (strcmp(filepath, line1) == 0)
-            return 0;
+        if (strcmp(filepath, line1) == 0){
+            found = 1;
+            break;
+        }
+       
+    }
+    if (found) {
+            long int savedModTime;
+            long int savedTime;
+            sscanf(line, "%*s\t%ld\t%ld\n", &savedModTime, &savedTime);
+            if (savedModTime != modification_time) {
+                 time_t currentTime;
+                 time(&currentTime);
+                 fseek(file, -strlen(line) - 1, SEEK_CUR);
+                 fprintf(file, "%s\t%ld\t%ld\n", filepath, (long)modification_time, (long)currentTime);
+                 return 0;
+            } else {
+                 return 0;
+            }
     }
     fclose(file);
 
     file = fopen(neoPath, "a");
     if (file == NULL)
         return 1;
-
     time_t currentTime;
     time(&currentTime);
-    fprintf(file, "%s\t%ld\n", filepath, (long)currentTime);
+
+    fprintf(file, "%s\t%ld\t%ld\n", filepath, (long)modification_time, (long)currentTime);
 
     fclose(file);
     return 0;

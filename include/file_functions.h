@@ -25,6 +25,13 @@
 #include <errno.h>
 #include <libgen.h>
 #include <glob.h>
+struct tagInfo {
+    char tagname[50];
+    int commitID;
+    char author[50];
+    char message[100];
+    char operationTime[20];
+};
 typedef struct Commit {
     char message[100];
     struct Commit* parent;
@@ -44,12 +51,12 @@ int add_to_staging(char *filepath);
 int add_to_staging_recursive(char *dirpath);
 bool check_file_directory_exists(char *filepath);
 bool check_file_directory_exists_total(char *filepath);
-int commit_staged_file(int commit_ID, char *filepath);
+int commit_staged_file(int commit_ID, char *filepath, time_t modification_time);
 bool is_tracked(char *filepath);
 int find_file_last_commit(char* filepath);
 int create_log_file(int commit_ID, char *message, char *time, char *branch, char *author);
 int track_file(char *filepath);
-void inc_last_commit_ID();
+void change_last_commit_ID(int new_id);
 int run_commit(int argc, char * const argv[]);
 void update_username(char *new_usr);
 void update_email(char *new_eml);
@@ -102,7 +109,7 @@ void change_branch_in_configs(char *new_branchname);
 int checkout_file_to_branch(char *filename, char *filepath, char *branchname);
 int run_checkouttobranch(char *branchname);
 int containsWildcard(char *str);
-void identifyWordsWithWildcard(char *pattern);
+void identifyWordsWithWildcard(char *pattern);;
 int checkout_to_id_branch(char *branchname, int commit_ID);
 int checkout_file_to_id_branch(char *filename, char *filepath, char *branchname, int commit_ID);
 void makeHEADzero_afterchkot_byID();
@@ -111,11 +118,34 @@ void makeHEADone_aftergoing_head();
 int run_checkoutHEAD_forbr(char *branchname);
 int run_checkoutHEAD(int argc, char *const argv[]);
 int run_checkout_master(int argc, char *const argv[]);
-void inc_last_commit_ID_ofbrn(char *branchname);
+void change_last_commit_ID_ofbrn(char *branchname, int new_id);
 int saveContent_for_branch(int commit_ID, char* filepath, char *filename, char *branchname);
 int run_commit_on_branch(int argc, char *const argv[], char *branchname);
 int inc_last_commit_ID_total();
+int extract_current_ID();
+int extract_lastID_master();
+int extract_lastID_branch(char *branchname);
+void change_current_ID(int new_currentID);
 
+int add_info_to_tags_file(int commit_ID, char *message, char *time, char *tagname, char *author);
+void print_target_tag(char *tagname);
+bool check_tag_exists(char *tagname);
+void overwrite_existing_tag(int commit_ID, char *message, char *time, char *tagname, char *author);
+int add_info_to_tags_file_tekrri(int commit_ID, char *message, char *time, char *tagname, char *author);
+
+
+void swap(struct tagInfo *a, struct tagInfo *b);
+void printTagNamesInOrder();
+
+int run_revert(int argc, char *const argv[]);
+int run_revert_for_last_id(int argc, char *const argv[]);
+int run_revertm(int argc, char *const argv[]);
+
+void searchWordInFile(char *filePath, char *searchWord) ;
+int isWordMatch(const char *line, const char *searchWord);
+void searchWordInFileandPrintnum(char *filePath, char *searchWord);
+void searchWordInFile_in_a_id(char *filename, char *targetWord,int commit_ID);
+void searchWordInFile_in_a_id_andprintNum(char *filename, char *targetWord,int commit_ID);
 
 
 

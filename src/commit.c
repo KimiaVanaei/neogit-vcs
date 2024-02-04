@@ -98,7 +98,8 @@ int run_commit(int argc, char *const argv[])
         int commit_ID = inc_last_commit_ID_total();
         if (commit_ID == -1)
             return 1;
-        inc_last_commit_ID();
+        change_last_commit_ID(commit_ID);   // for master
+        change_current_ID(commit_ID);    // total
         char line[1024];
 
         while (fgets(line, sizeof(line), file) != NULL)
@@ -137,7 +138,9 @@ int run_commit(int argc, char *const argv[])
             }
             char line1[1024];
             sscanf(line, "%s", line1);
-            commit_staged_file(commit_ID, line1);
+            long int modtime;
+            sscanf(line, "%*s\t%ld", &modtime);
+            commit_staged_file(commit_ID, line1, modtime);
             saveContent(commit_ID, line1, fileName);
             saveContent_total(commit_ID, line1, fileName);
             track_file(line1);
@@ -166,7 +169,7 @@ int run_commit(int argc, char *const argv[])
     }
 }
 
-void inc_last_commit_ID()
+void change_last_commit_ID(int new_id)
 {
     char cwd[1024];
     if (getcwd(cwd, sizeof(cwd)) == NULL)
@@ -235,13 +238,13 @@ void inc_last_commit_ID()
     while (fgets(line, sizeof(line), file) != NULL)
     {
         if (strncmp(line, "last_commit_ID", 14) == 0)
-        {
-            sscanf(line, "last_commit_ID: %d\n", &last_commit_ID);
-            last_commit_ID++;
-            fprintf(tmp_file, "last_commit_ID: %d\n", last_commit_ID);
-        }
-        else
-            fprintf(tmp_file, "%s", line);
+		{
+			fprintf(tmp_file, "last_commit_ID: %d\n", new_id);
+		}
+		else
+		{
+			fprintf(tmp_file, "%s", line);
+		}
     }
     fclose(file);
     fclose(tmp_file);
@@ -478,7 +481,7 @@ bool check_file_directory_exists_total(char *filepath)
     return false;
 }
 
-int commit_staged_file(int commit_ID, char *filepath)
+int commit_staged_file(int commit_ID, char *filepath, time_t modification_time)
 {
     char cwd[1024];
     if (getcwd(cwd, sizeof(cwd)) == NULL)
@@ -544,14 +547,6 @@ int commit_staged_file(int commit_ID, char *filepath)
     if (write_file == NULL)
         return 1;
 
-    struct stat file_info;
-
-    if (stat(filepath, &file_info) != 0)
-    {
-        perror("Error getting file information");
-        return 1;
-    }
-    time_t modification_time = file_info.st_mtime;
 
     fprintf(write_file, "%s\t%ld\n", filepath, modification_time);
     fclose(write_file);

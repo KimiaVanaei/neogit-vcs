@@ -104,7 +104,7 @@ int run_checkoutHEAD(int argc, char *const argv[])
             }
         }
         closedir(dir);
-        makeHEADone_aftergoing_head();
+        
 
         return 0;
     }
@@ -195,8 +195,7 @@ int run_checkoutHEAD_forbr(char *branchname)
 			}
 		}
 		closedir(dir);
-         makeHEADone_aftergoing_head();
-
+         
 		return 0;
 	}
 }

@@ -170,11 +170,11 @@ char *currentAuthor()
         }
     }
     fclose(file2);
-    if (chdir(originalCwd) != 0)
-		{
-			perror("Error restoring original directory");
-			return NULL;
-		}
+    // if (chdir(originalCwd) != 0)
+	// 	{
+	// 		perror("Error restoring original directory");
+	// 		return NULL;
+	// 	}
 
     if (time_glob > time_local)
     {

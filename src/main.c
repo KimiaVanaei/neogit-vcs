@@ -53,10 +53,11 @@ int main(int argc, char *argv[])
     {
         printf(RED "please specify a file\n" RESET);
     }
-    else if ((argc >= 2) && (strcmp(argv[1], "add") == 0) && (strcmp(argv[2], "-n") != 0) && (strcmp(argv[2], "-f") != 0))
-    {
-        return run_add(argc, argv);
-    }
+    // else if ((argc == 3) && (strcmp(argv[1], "add") == 0) && (strcmp(argv[2], "-n") != 0) && (strcmp(argv[2], "-f") != 0))
+    // {
+    //     if (!containsWildcard(argv[2]))
+    //     return run_add(argc, argv);                     ///<<<<<<<<<< UNCOMMENT IF FACED BUGS >>>>>>>>>>>>>///
+    // }
     else if ((argc >= 3) && (strcmp(argv[1], "add") == 0) && (strcmp(argv[2], "-f") == 0))
     {
         for (int i = 3; i < argc; i++)
@@ -71,6 +72,30 @@ int main(int argc, char *argv[])
             if (run_add_single(filePath) != 0)
                 fprintf(stderr, "Error processing: %s\n", argv[i]);
         }
+    }
+      if ((argc == 3) && (strcmp(argv[1], "add") == 0))
+    {
+        // if (containsWildcard(argv[2])) {
+            glob_t glob_result;
+            if (glob(argv[2], 0, NULL, &glob_result) != 0)
+            {
+                perror("Error expanding wildcard");
+                return -1;
+            }
+            for (size_t i = 0; i < glob_result.gl_pathc; ++i)
+            {
+                char filePath[PATH_MAX];
+                if (realpath(glob_result.gl_pathv[i], filePath) == NULL)
+                {
+                    printf("%s does not exist\n", glob_result.gl_pathv[i]);
+                    exit(EXIT_FAILURE);
+                }
+
+                if (run_add_single(filePath) != 0)
+                    fprintf(stderr, "Error processing: %s\n", glob_result.gl_pathv[i]);
+            }
+            globfree(&glob_result);
+        // }
     }
     else if ((argc >= 2) && strcmp(argv[1], "commit") == 0 && (strcmp(argv[2], "-s") != 0))
     {
@@ -93,19 +118,34 @@ int main(int argc, char *argv[])
             }
         }
     }
-    else if ((argc >= 2) && strcmp(argv[1], "checkout") == 0 && strcmp(argv[2], "HEAD") != 0)
+     //neogit checkout HEAD-n
+    else if ((argc == 3) && (strcmp(argv[1], "checkout") == 0) && (strncmp(argv[2], "HEAD-", 4) == 0))
     {
-        // char *current_branch = (char *)malloc(50 * sizeof(char));
-        // current_branch = currentBranch();
-        // if (strcmp(current_branch, "master") == 0)
-        // {
+        char* endptr;
+        long n_value = strtol(argv[2] + 5, &endptr, 10);
+        char *current_branch = (char *)malloc(50 * sizeof(char));
+        current_branch = currentBranch();
+        int last_id_of_branch = extract_lastID_branch(current_branch);
+        int last_id_of_master = extract_lastID_master();
+        if (strcmp(current_branch, "master") == 0)
+        {
+            // printf("%d\n", last_id_of_master);
+            change_current_ID(last_id_of_master - n_value);
+            makeHEADzero_afterchkot_byID();
+        }
+        else
+        {
+            // printf("%d\n", last_id_of_branch);
+            change_current_ID(last_id_of_branch - n_value);
+            makeHEADzero_afterchkot_byID();
+            return checkout_to_id_branch(current_branch, last_id_of_branch - n_value);
+        }
+
+        // return run_checkout(argc, argv);
+    }
+    else if ((argc == 3) && strcmp(argv[1], "checkout") == 0 && strcmp(argv[2], "HEAD") != 0)
+    {
             return run_checkout(argc, argv);
-        // }
-        // else
-        // {
-        //     int id = atoi(argv[2]);
-        //     return checkout_to_id_branch(current_branch, id);
-        // }
     }
     else if ((argc >= 2) && strcmp(argv[1], "checkoutbr") == 0)
     {
@@ -113,29 +153,41 @@ int main(int argc, char *argv[])
         change_branch_in_configs(branchname);
         if (strcmp(branchname, "master") == 0)
         {
+            int last_commitID_master = extract_lastID_master();
+            change_current_ID(last_commitID_master);
             return run_checkout_master(argc, argv);
+        }else {
+            int last_commitID_branch = extract_lastID_branch(branchname);
+            change_current_ID(last_commitID_branch);
+             return run_checkouttobranch(branchname);
         }
-        return run_checkouttobranch(branchname);
     }
     else if ((argc == 3) && strcmp(argv[1], "checkout") == 0 && strcmp(argv[2], "HEAD") == 0)
     {
         char *current_branch = (char *)malloc(50 * sizeof(char));
         current_branch = currentBranch();
         if (strcmp(current_branch, "master") == 0)
-        {
+        {   
+            int last_commitID_master = extract_lastID_master();
+            change_current_ID(last_commitID_master);
+             makeHEADone_aftergoing_head();
             return run_checkoutHEAD(argc, argv);
         }
         else
         {
-            int id = atoi(argv[2]);
+            int last_commitID_branch = extract_lastID_branch(current_branch);
+            change_current_ID(last_commitID_branch);
+             makeHEADone_aftergoing_head();
             return run_checkoutHEAD_forbr(current_branch);
         }
     }
-    else if ((argc >= 2) && strcmp(argv[1], "reset") == 0 && (strcmp(argv[2], "-f") != 0) && (strcmp(argv[2], "-undo") != 0))
-    {
-        char *target = argv[2];
-        return remove_from_staging(target);
-    }
+    // else if ((argc == 3) && strcmp(argv[1], "reset") == 0 && (strcmp(argv[2], "-f") != 0) && (strcmp(argv[2], "-undo") != 0))
+    // {
+    //     if (!containsWildcard(argv[2])) {
+    //         char *target = argv[2];
+    //         return remove_from_staging(target);
+    //     }                                                   ///<<<<<<<<<< UNCOMMENT IF FACED BUGS >>>>>>>>>>>>>///
+    // }
     else if ((argc >= 3) && (strcmp(argv[1], "reset") == 0) && (strcmp(argv[2], "-f") == 0))
     {
         for (int i = 3; i < argc; i++)
@@ -149,6 +201,29 @@ int main(int argc, char *argv[])
             if (remove_from_staging(argv[i]) != 0)
                 fprintf(stderr, "Error processing: %s\n", argv[i]);
         }
+    }
+    if ((argc == 3) && (strcmp(argv[1], "reset") == 0) && (strcmp(argv[2], "-undo") != 0))
+    {
+        // if (containsWildcard(argv[2])) {
+            glob_t glob_result;
+            if (glob(argv[2], 0, NULL, &glob_result) != 0)
+            {
+                perror("Error expanding wildcard");
+                return -1;
+            }
+            for (size_t i = 0; i < glob_result.gl_pathc; ++i)
+            {
+                char filePath[PATH_MAX];
+                if (realpath(glob_result.gl_pathv[i], filePath) == NULL)
+                {
+                    printf("%s does not exist\n", glob_result.gl_pathv[i]);
+                    exit(EXIT_FAILURE);
+                }
+                if (remove_from_staging(glob_result.gl_pathv[i]) != 0)
+                fprintf(stderr, "Error processing: %s\n", argv[i]);
+            }
+            globfree(&glob_result);
+        // }
     }
     else if ((argc == 3) && (strcmp(argv[1], "reset") == 0) && (strcmp(argv[2], "-undo") == 0))
     {
@@ -311,6 +386,218 @@ int main(int argc, char *argv[])
         }
         printf("Leaving 'test' block\n");
     }
+    /////////////////////////////////////////////////////
+    else if ((argc == 8) && (strcmp(argv[1], "tag") == 0) && (strcmp(argv[2], "-a") == 0) && (strcmp(argv[4], "-m") == 0) && (strcmp(argv[6], "-c") == 0))
+    {
+        time_t t = time(NULL);
+        struct tm *current_time = localtime(&t);
+        char time_str[50];
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); //ejbri
+        char *author = (char *)malloc(50 * sizeof(char));
+        author = currentAuthor();
+        int commit_id = atoi(argv[7]);
+        char message[1024];
+        strcpy(message, argv[5]);
+        char tagname[50];
+        strcpy(tagname, argv[3]);
+        return add_info_to_tags_file(commit_id, message, time_str, tagname, author);
+    }
+    else if ((argc == 9)  && (strcmp(argv[1], "tag") == 0) && (strcmp(argv[2], "-a") == 0) && (strcmp(argv[4], "-m") == 0) && (strcmp(argv[6], "-c") == 0) && (strcmp(argv[8], "-f") == 0))
+    {
+        time_t t = time(NULL);
+        struct tm *current_time = localtime(&t);
+        char time_str[50];
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); //ejbri
+        char *author = (char *)malloc(50 * sizeof(char));
+        author = currentAuthor();
+        int commit_id = atoi(argv[7]);
+        char message[1024];
+        strcpy(message, argv[5]);
+        char tagname[50];
+        strcpy(tagname, argv[3]);
+        return add_info_to_tags_file_tekrri(commit_id, message, time_str, tagname, author);
+    }
+    else if ((argc == 6) && (strcmp(argv[1], "tag") == 0) && (strcmp(argv[2], "-a") == 0) && (strcmp(argv[4], "-m") == 0))
+    {
+        time_t t = time(NULL);
+        struct tm *current_time = localtime(&t);
+        char time_str[50];
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); //ejbri
+        char *author = (char *)malloc(50 * sizeof(char));
+        author = currentAuthor();
+        char tagname[50];
+        strcpy(tagname, argv[3]);
+        char message[1024];
+        strcpy(message, argv[5]);
+        int curr_id = extract_current_ID();
+        return add_info_to_tags_file(curr_id, message, time_str, tagname, author);
+    }
+    else if ((argc == 7) && (strcmp(argv[1], "tag") == 0) && (strcmp(argv[2], "-a") == 0) && (strcmp(argv[4], "-m") == 0) && (strcmp(argv[6], "-f") == 0))
+    {
+        time_t t = time(NULL);
+        struct tm *current_time = localtime(&t);
+        char time_str[50];
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); 
+        char *author = (char *)malloc(50 * sizeof(char));
+        author = currentAuthor();
+        char tagname[50];
+        strcpy(tagname, argv[3]);
+        char message[1024];
+        strcpy(message, argv[5]);
+        int curr_id = extract_current_ID();
+        return add_info_to_tags_file_tekrri(curr_id, message, time_str, tagname, author);
+    }
+     else if ((argc == 6) && (strcmp(argv[1], "tag") == 0) && (strcmp(argv[2], "-a") == 0) && (strcmp(argv[4], "-c") == 0))
+    {
+        time_t t = time(NULL);
+        struct tm *current_time = localtime(&t);
+        char time_str[50];
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); //ejbri
+        char *author = (char *)malloc(50 * sizeof(char));
+        author = currentAuthor();
+        char tagname[50];
+        strcpy(tagname, argv[3]);
+        char message[] = "";
+        int commit_id = atoi(argv[5]);
+        return add_info_to_tags_file(commit_id, message, time_str, tagname, author);
+    }
+     else if ((argc == 7) && (strcmp(argv[1], "tag") == 0) && (strcmp(argv[2], "-a") == 0) && (strcmp(argv[4], "-c") == 0) && (strcmp(argv[6], "-f") == 0))
+    {
+        time_t t = time(NULL);
+        struct tm *current_time = localtime(&t);
+        char time_str[50];
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); //ejbri
+        char *author = (char *)malloc(50 * sizeof(char));
+        author = currentAuthor();
+        char tagname[50];
+        strcpy(tagname, argv[3]);
+        char message[] = "";
+        int commit_id = atoi(argv[5]);
+        return add_info_to_tags_file_tekrri(commit_id, message, time_str, tagname, author);
+    }
+    // neogit tag -a <tag-name> [-m <message>] [-c <commit-id>] [-f]
+    else if ((argc == 4) && (strcmp(argv[1], "tag") == 0) && (strcmp(argv[2], "-a") == 0))
+    {
+        time_t t = time(NULL);
+        struct tm *current_time = localtime(&t);
+        char time_str[50];
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time);
+        char *author = (char *)malloc(50 * sizeof(char));
+        author = currentAuthor();
+        char tagname[50];
+        strcpy(tagname, argv[3]);
+        char message[] = "";
+        int curr_id = extract_current_ID();
+        return add_info_to_tags_file(curr_id, message, time_str, tagname, author);
+    }
+    else if ((argc == 5) && (strcmp(argv[1], "tag") == 0) && (strcmp(argv[2], "-a") == 0) && (strcmp(argv[4], "-f") == 0))
+    {
+        time_t t = time(NULL);
+        struct tm *current_time = localtime(&t);
+        char time_str[50];
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time);
+        char *author = (char *)malloc(50 * sizeof(char));
+        author = currentAuthor();
+        char tagname[50];
+        strcpy(tagname, argv[3]);
+        char message[] = "";
+        int curr_id = extract_current_ID();
+        return add_info_to_tags_file_tekrri(curr_id, message, time_str, tagname, author);
+    }
+    /////////////////////////////////////////////////////
+    else if ((argc == 4) && (strcmp(argv[1], "tag") == 0) && (strcmp(argv[2], "show") == 0))
+    {
+        char tagname[50];
+        strcpy(tagname, argv[3]);
+        print_target_tag(tagname);
+    }
+    else if ((argc == 2) && (strcmp(argv[1], "tag") == 0))
+    {
+        printTagNamesInOrder();
+    }
+   // neogit revert -n <commit-id>
+    else if ((argc == 4) && (strcmp(argv[1], "revert") == 0) && (strcmp(argv[2], "-n") == 0))
+    {
+        return run_revert(argc, argv);
+    }
+    else if ((argc == 3) && (strcmp(argv[1], "revert") == 0) && (strcmp(argv[2], "-n") == 0))
+    {
+        return run_revert_for_last_id(argc, argv);
+    }
+    // neogit revert [-m <message>] HEAD-X
+    //  else if ((argc == 5) && (strcmp(argv[1], "revert") == 0) && (strcmp(argv[2], "-m") == 0) && (strncmp(argv[4], "HEAD-", 5) == 0))
+    // {
+    //     char* endptr;
+    //     long x_value = strtol(argv[4] + 5, &endptr, 10);
+    //     int commit_id = extract_current_ID() - x_value;
+    //      run_revertm(argc, argv);
+    //     char *current_branch = (char *)malloc(50 * sizeof(char));
+    //     current_branch = currentBranch();
+    //     char message[1024];
+    //     strcpy(message, argv[3]);
+        
+    //     if (strcmp(current_branch, "master") == 0)
+    //     {
+    //         return run_commit(argc, argv);
+    //     }else{
+    //         return run_commit_on_branch(argc, argv, current_branch);
+    //     }
+    // }
+     else if ((argc == 6) && (strcmp(argv[1], "grep") == 0) && (strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0))
+     {
+        char targetWord[50] ;
+        strcpy(targetWord, argv[5]);
+        char filePath[PATH_MAX];
+            if (realpath(argv[3], filePath) == NULL)
+            {
+                perror("realpath");
+                exit(EXIT_FAILURE);
+            }
+        searchWordInFile(filePath, targetWord);
+     }
+     else if ((argc == 7) && (strcmp(argv[1], "grep") == 0) && (strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0) && (strcmp(argv[6], "-n") == 0))
+     {
+        char targetWord[50] ;
+        strcpy(targetWord, argv[5]);
+        char filePath[PATH_MAX];
+            if (realpath(argv[3], filePath) == NULL)
+            {
+                perror("realpath");
+                exit(EXIT_FAILURE);
+            }
+        searchWordInFileandPrintnum(filePath, targetWord);
+     }
+    else if ((argc == 8) && (strcmp(argv[1], "grep") == 0) && (strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0) && (strcmp(argv[6], "-c") == 0))
+     {
+        char targetWord[50] ;
+        strcpy(targetWord, argv[5]);
+        int commit_ID = atoi(argv[7]);
+        char *fileName = strrchr(argv[3], '/');
+            if (fileName != NULL)
+            {
+                fileName++;
+                searchWordInFile_in_a_id(fileName, targetWord, commit_ID);
+            } else {
+                searchWordInFile_in_a_id(argv[3], targetWord, commit_ID);
+            }
+        
+     }
+    else if ((argc == 9) && (strcmp(argv[1], "grep") == 0) && (strcmp(argv[2], "-f") == 0) && (strcmp(argv[4], "-p") == 0) && (strcmp(argv[6], "-c") == 0) && (strcmp(argv[8], "-n") == 0))
+     {
+        char targetWord[50] ;
+        strcpy(targetWord, argv[5]);
+        int commit_ID = atoi(argv[7]);
+        char *fileName = strrchr(argv[3], '/');
+            if (fileName != NULL)
+            {
+                fileName++;
+                searchWordInFile_in_a_id_andprintNum(fileName, targetWord, commit_ID);
+            } else {
+                searchWordInFile_in_a_id_andprintNum(argv[3], targetWord, commit_ID);
+            }
+        
+     }
+
 
     return 0;
 }

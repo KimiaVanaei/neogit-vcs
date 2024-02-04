@@ -143,8 +143,11 @@ void makeHEADone_aftergoing_head()
 	char confPath[PATH_MAX];
 	snprintf(confPath, sizeof(confPath), "%s/.neogit/config", currentDir);
 	FILE *file = fopen(confPath, "r");
-	if (file == NULL)
+	if (file == NULL) {
+		printf("no\n");
 		return;
+	}
+		
 	char tmpconfPath[PATH_MAX];
 	snprintf(tmpconfPath, sizeof(tmpconfPath), "%s/.neogit/tmp_config", currentDir);
 	FILE *tmp_file = fopen(tmpconfPath, "w");

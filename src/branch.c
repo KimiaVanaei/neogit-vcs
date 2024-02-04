@@ -143,9 +143,9 @@ int run_branch(char *branch_name)
 
     while (fgets(line, sizeof(line), file) != NULL)
     {
-        if (strncmp(line, "last_id_total", 13) == 0)
+        if (strncmp(line, "last_commit_ID", 14) == 0)
         {
-            sscanf(line, "last_id_total: %d\n", &last_commit_ID);
+            sscanf(line, "last_commit_ID: %d\n", &last_commit_ID);
         }
     }
     fclose(file);

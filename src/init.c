@@ -12,6 +12,7 @@ int create_configs(char *username, char *email)
 	fprintf(file, "HEAD(1 means u are in HEAD) %d\n", 1);
 	fprintf(file, "branch: %s\n", "master");
 	fprintf(file, "last_id_total: %d\n", 0);
+	fprintf(file, "current_commit_ID: %d\n", 0);
 	fclose(file);
 
 	if (mkdir(".neogit/commits", 0755) != 0)
