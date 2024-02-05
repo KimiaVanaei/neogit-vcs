@@ -335,7 +335,6 @@ void printBranches()
     }
 
     struct dirent *entry2;
-    printf("master\n");
     while ((entry2 = readdir(dir)) != NULL) {
         if (entry2->d_type == DT_DIR && strcmp(entry2->d_name, ".") != 0 && strcmp(entry2->d_name, "..") != 0) {
             printf("%s\n", entry2->d_name);

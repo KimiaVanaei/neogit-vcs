@@ -670,6 +670,11 @@ void printLogContentbyWords(char **target_words, int num_words)
                 ptr++;
             }
 
+            if (!found_any_word && matchesWildcard(commits[i].message, target_words[j])) {
+                found_any_word = 1;
+                break;
+            }
+
             if (found_any_word)
             {
                 break;  // No need to check further if any word is found
@@ -687,4 +692,28 @@ void printLogContentbyWords(char **target_words, int num_words)
             printf("---------------------------------------\n");
         }
     }
+}
+
+int matchesWildcard(const char *str, const char *pattern) {
+    while (*str && *pattern) {
+        if (*pattern == '*') {
+            while (*pattern == '*') {
+                pattern++;
+            }
+            while (*str && *str != *pattern) {
+                str++;
+            }
+        } else if (*str != *pattern) {
+            return 0;
+        } else {
+            str++;
+            pattern++;
+        }
+    }
+
+    while (*pattern == '*') {
+        pattern++;
+    }
+
+    return !*pattern;
 }

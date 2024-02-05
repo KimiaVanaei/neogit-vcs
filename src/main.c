@@ -2,17 +2,13 @@
 
 int main(int argc, char *argv[])
 {
-    // if (argc >= 2) {
-    //     if (check_and_replace_alias(argv[1]) != NULL)
-    //     {
-
-    //     }
-    // }
+    
     if ((argc < 2))
     {
-        printf("invalid command\n");
+        printf(RED "invalid command\n" RESET);
         return 1;
     }
+ 
     if ((argc == 2) && strcmp(argv[1], "init") == 0)
     {
         return run_init();
@@ -37,13 +33,13 @@ int main(int argc, char *argv[])
         char *new_email = argv[3];
         update_localemail(new_email);
     }
-    else if ((argc == 5) && (strcmp(argv[1], "config") == 0) && (strcmp(argv[2], "--global") == 0) && (strncmp(argv[3], "alias", 5) == 0))
+    else if ((argc == 5) && (strcmp(argv[1], "config") == 0) && (strcmp(argv[2], "--global") == 0) && (strncmp(argv[3], "alias.", 6) == 0))
     {
         char *dotPosition = strchr(argv[3], '.');
         char *newalias = dotPosition + 1;
         add_alias(newalias, argv[4]);
     }
-    else if ((argc == 4) && (strcmp(argv[1], "config") == 0) && (strncmp(argv[2], "alias", 5) == 0))
+    else if ((argc == 4) && (strcmp(argv[1], "config") == 0) && (strncmp(argv[2], "alias.", 6) == 0))
     {
         char *dotPosition = strchr(argv[2], '.');
         char *newalias = dotPosition + 1;
@@ -119,29 +115,14 @@ int main(int argc, char *argv[])
         }
     }
      //neogit checkout HEAD-n
-    else if ((argc == 3) && (strcmp(argv[1], "checkout") == 0) && (strncmp(argv[2], "HEAD-", 4) == 0))
+    else if ((argc == 3) && (strcmp(argv[1], "checkout") == 0) && (strncmp(argv[2], "HEAD-", 5) == 0))
     {
         char* endptr;
         long n_value = strtol(argv[2] + 5, &endptr, 10);
         char *current_branch = (char *)malloc(50 * sizeof(char));
         current_branch = currentBranch();
-        int last_id_of_branch = extract_lastID_branch(current_branch);
-        int last_id_of_master = extract_lastID_master();
-        if (strcmp(current_branch, "master") == 0)
-        {
-            // printf("%d\n", last_id_of_master);
-            change_current_ID(last_id_of_master - n_value);
-            makeHEADzero_afterchkot_byID();
-        }
-        else
-        {
-            // printf("%d\n", last_id_of_branch);
-            change_current_ID(last_id_of_branch - n_value);
-            makeHEADzero_afterchkot_byID();
-            return checkout_to_id_branch(current_branch, last_id_of_branch - n_value);
-        }
-
-        // return run_checkout(argc, argv);
+        makeHEADzero_afterchkot_byID();
+        return checkout_to_id_branch(current_branch, n_value );
     }
     else if ((argc == 3) && strcmp(argv[1], "checkout") == 0 && strcmp(argv[2], "HEAD") != 0)
     {
@@ -595,8 +576,130 @@ int main(int argc, char *argv[])
             } else {
                 searchWordInFile_in_a_id_andprintNum(argv[3], targetWord, commit_ID);
             }
-        
      }
+     // neogit diff -c <commit1-id> <commit2-id>
+    else if((argc == 5) && (strcmp(argv[1], "diff") == 0) && (strcmp(argv[2], "-c") == 0))
+    {
+        int first_id = atoi(argv[3]);
+        int scnd_id = atoi(argv[4]);
+        find_diff_between_two(first_id, scnd_id);
+    }
+
+    // neogit diff -f <file1> <file2> –line1 <begin-end> –line2 <begin-end>
+    else if ((argc == 9) && (strcmp(argv[1], "diff") == 0) && (strcmp(argv[2], "-f") == 0) && (strcmp(argv[5], "--line1") == 0) && (strcmp(argv[7], "--line2") == 0))
+    {
+        int f1begin, f1end, f2begin, f2end;
+        sscanf(argv[6], "%d-%d", &f1begin, &f1end);
+        sscanf(argv[8], "%d-%d", &f2begin, &f2end);
+        f1begin--;
+        f1end--;
+        f2begin--;
+        f2end--;
+        char file1Path[PATH_MAX];
+        if (realpath(argv[3], file1Path) == NULL)
+        {
+           perror("realpath");
+           exit(EXIT_FAILURE);
+        }
+        char file2Path[PATH_MAX];
+        if (realpath(argv[4], file2Path) == NULL)
+        {
+           perror("realpath");
+           exit(EXIT_FAILURE);
+        }
+        Diff result = getDiff(file1Path, file2Path, f1begin, f1end, f2begin, f2end);
+        printDifferences(&result, file1Path, file2Path);
+        for (size_t i = 0; i < result.deletedCount; i++) {
+            free(result.deletedLines[i]);
+        }
+        free(result.deletedLines);
+        free(result.lineNumberDeleted);
+        for (size_t i = 0; i < result.addedCount; i++) {
+            free(result.addedLines[i]);
+        }
+        free(result.addedLines);
+        free(result.lineNumberAdded);
+    }
+    else if ((argc == 5) && (strcmp(argv[1], "diff") == 0) && (strcmp(argv[2], "-f") == 0))
+    {
+        int f1begin=0;
+        int f2begin = 0;
+        char file1Path[PATH_MAX];
+        if (realpath(argv[3], file1Path) == NULL)
+        {
+           perror("realpath");
+           exit(EXIT_FAILURE);
+        }
+        char file2Path[PATH_MAX];
+        if (realpath(argv[4], file2Path) == NULL)
+        {
+           perror("realpath");
+           exit(EXIT_FAILURE);
+        }
+        int f1end = countLines(file1Path);
+        int f2end = countLines(file2Path);
+        Diff result = getDiff(file1Path, file2Path, f1begin, f1end, f2begin, f2end);
+        printDifferences(&result, file1Path, file2Path);
+        for (size_t i = 0; i < result.deletedCount; i++) {
+            free(result.deletedLines[i]);
+        }
+        free(result.deletedLines);
+        free(result.lineNumberDeleted);
+        for (size_t i = 0; i < result.addedCount; i++) {
+            free(result.addedLines[i]);
+        }
+        free(result.addedLines);
+        free(result.lineNumberAdded);
+    }
+    // neogit merge -b <branch1> <branch2>
+    else if ((argc == 5) && (strcmp(argv[1], "merge") == 0) && (strcmp(argv[2], "-b") == 0))
+    {
+        int lastIDofFirstBranch;
+        if (strcmp(argv[3], "master") == 0){
+            lastIDofFirstBranch = extract_lastID_master();
+        } else {
+            lastIDofFirstBranch = extract_lastID_branch(argv[3]);
+        }
+        int lastIDofScndBranch;
+        if (strcmp(argv[4], "master") == 0){
+            lastIDofScndBranch = extract_lastID_master();
+        } else {
+            lastIDofScndBranch = extract_lastID_branch(argv[4]);
+        }
+        
+        char new_branchname[100];
+        strcpy(new_branchname, argv[3]);
+        strcat(new_branchname, "_");
+        strcat(new_branchname, argv[4]);
+
+         int merge = run_merge(lastIDofFirstBranch, lastIDofScndBranch);
+         if (merge == 1){
+              add_merged_branch(new_branchname);
+              change_branch_in_configs(new_branchname);
+              char *command = "neogit commit -m merged";
+               system(command);
+         }
+    }
+// else if ((argc == 2))
+// {
+//     char *recent_alias_filePath = find_most_recent_aliasfile();
+//     char *corr = check_and_replace_alias(argv[1], recent_alias_filePath);
+//     if (corr != NULL) {
+//         system(corr);
+//         if (system(corr) == -1) {
+//     perror("Error executing command");
+// }
+
+//     } else {
+//         fprintf(stderr, "Error in check_and_replace_alias\n");
+//     }
+// }
+else if ((argc == 2) && strcmp(argv[1], "hello") == 0)
+{
+    char *comm = "neogit add bye.txt";
+    system(comm);
+}
+
 
 
     return 0;

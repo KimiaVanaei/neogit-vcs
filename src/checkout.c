@@ -106,7 +106,26 @@ int run_checkout(int argc, char *const argv[])
 			}
 		}
 		closedir(dir);
-		makeHEADzero_afterchkot_byID();
+		 
+		 char *current_branch = (char *)malloc(50 * sizeof(char));
+        current_branch = currentBranch();
+        if (strcmp(current_branch, "master") == 0)
+        {
+			int last_commitID_master = extract_lastID_master();
+			if (commit_ID == last_commitID_master) {
+				makeHEADone_aftergoing_head();
+			} else {
+                    makeHEADzero_afterchkot_byID();
+			}
+		} else {
+			int last_commitID_branch = extract_lastID_branch(current_branch);
+			if (commit_ID == last_commitID_branch) {
+				makeHEADone_aftergoing_head();
+			} else {
+                    makeHEADzero_afterchkot_byID();
+			}
+		}
+		
 		int new_currentID = atoi(argv[2]);
 		change_current_ID(new_currentID);
 

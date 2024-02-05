@@ -144,7 +144,6 @@ void makeHEADone_aftergoing_head()
 	snprintf(confPath, sizeof(confPath), "%s/.neogit/config", currentDir);
 	FILE *file = fopen(confPath, "r");
 	if (file == NULL) {
-		printf("no\n");
 		return;
 	}
 		

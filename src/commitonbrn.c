@@ -310,7 +310,6 @@ int saveContent_for_branch(int commit_ID, char* filepath, char *filename, char *
     strcpy(read_path, filepath);
 	FILE *write_file = fopen(write_path, "w");
 	if (write_file == NULL) {
-		printf("no\n");
 		return 1;}
 	FILE *read_file = fopen(read_path, "r");
     if (read_file == NULL) return 1;

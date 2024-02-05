@@ -2,70 +2,292 @@
 
 int add_alias(char *newalias, char *command)
 {
-    FILE *file = fopen(".neogit/global_aliases", "a");
-    if (file == NULL)
-        return 1;
+    char cwd[1024];
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		return 1;
+
+	char tmp_cwd[1024];
+	bool exists = false;
+	struct dirent *entry;
+	do
+	{
+		DIR *dir = opendir(".");
+		if (dir == NULL)
+		{
+			perror("Error opening current directory");
+			return 1;
+		}
+		while ((entry = readdir(dir)) != NULL)
+		{
+			if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
+				exists = true;
+		}
+		closedir(dir);
+
+		if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+			return 1;
+
+		if (strcmp(tmp_cwd, "/") != 0)
+		{
+			if (chdir("..") != 0)
+				return 1;
+		}
+
+	} while (strcmp(tmp_cwd, "/") != 0);
+
+	if (chdir(cwd) != 0)
+		return 1;
+
+	if (!exists)
+	{
+		perror("neogit has not been initialized");
+		return 1;
+	}
+	else
+	{
+		FILE *file = fopen("/home/kimia/.neogitconfig/aliases.txt", "a");
+		if (file == NULL)
+			return 1;
+    
+    
     fprintf(file, "%s: %s\n", newalias, command);
     fclose(file);
     return 0;
+    }
 }
 int add_localalias(char *newalias, char *command)
 {
-    FILE *file = fopen(".neogit/local_aliases", "a");
-    if (file == NULL)
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
         return 1;
-    fprintf(file, "%s: %s\n", newalias, command);
-    fclose(file);
-    return 0;
-}
-
-char *get_alias_from_file(char *filename, char *command)
-{
-    FILE *file = fopen(filename, "r");
-    if (file == NULL)
+    char originalCwd[1024];
+    strcpy(originalCwd, cwd);
+    char tmp_cwd[1024];
+    char currentDir[1024];
+    bool foundNeogit = false;
+    struct dirent *entry;
+    do
     {
-        fprintf(stderr, "Error opening file %s\n", filename);
-        return NULL;
-    }
-
-    char line[1024]; 
-    char *alias = NULL;
-
-    while (fgets(line, sizeof(line), file) != NULL)
-    {
-        char *token = strtok(line, ":");
-        if (token != NULL && strcmp(token, command) == 0)
+        DIR *dir = opendir(".");
+        if (dir == NULL)
         {
-            char *alias_value = strtok(NULL, "\n");
-            if (alias_value != NULL)
+            perror("Error opening current directory");
+            return 1;
+        }
+        while ((entry = readdir(dir)) != NULL)
+        {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
             {
-                alias = strdup(alias_value);
+                foundNeogit = true;
                 break;
             }
         }
+        closedir(dir);
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return 1;
+        if (strcmp(tmp_cwd, "/") != 0)
+        {
+            if (chdir("..") != 0)
+                return 1;
+        }
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    if (!foundNeogit)
+    {
+        printf("neogit has not been initialized\n");
+        return 1;
     }
+    else
+    {
+        if (chdir(tmp_cwd) != 0)
+        {
+            perror("Error changing directory");
+            return 1;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+            return 1;
+        char aliasPath[PATH_MAX];
+        snprintf(aliasPath, sizeof(aliasPath), "%s/.neogit/local_aliases", currentDir);
 
-    fclose(file);
-
-    return alias;
+        FILE *file = fopen(aliasPath, "a");
+        if (file == NULL)
+            return 1;
+        fprintf(file, "%s: %s\n", newalias, command);
+        fclose(file);
+        if (chdir(originalCwd) != 0) {
+            perror("Error changing back to original directory");
+            return 1;
+        }
+        return 0;
+    }
 }
 
-char * check_and_replace_alias(char *command)
+char* find_most_recent_aliasfile()
 {
-    // Check global_aliases file
-    char *global_alias = get_alias_from_file(".neogit/global_aliases", command);
-    if (global_alias != NULL)
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        return NULL;
+    char originalCwd[1024];
+    strcpy(originalCwd, cwd);
+    char tmp_cwd[1024];
+    char currentDir[1024];
+    bool foundNeogit = false;
+    struct dirent *entry;
+    do
     {
-        strcpy(command, global_alias);
-        free(global_alias);
-        return command;
-    }
+        DIR *dir = opendir(".");
+        if (dir == NULL)
+        {
+            perror("Error opening current directory");
+            return NULL;
+        }
+        while ((entry = readdir(dir)) != NULL)
+        {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
+            {
+                foundNeogit = true;
+                break;
+            }
+        }
+        closedir(dir);
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return NULL;
+        if (strcmp(tmp_cwd, "/") != 0)
+        {
+            if (chdir("..") != 0)
+                return NULL;
+        }
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
 
-    // Check local_aliases file
-    char *local_alias = get_alias_from_file(".neogit/local_aliases", command);
-    if (local_alias != NULL)
+    if (!foundNeogit)
     {
-        strcpy(command, local_alias);
-        free(local_alias);
+        printf("neogit has not been initialized\n");
+        return NULL;
     }
+    else
+    {
+        if (chdir(tmp_cwd) != 0)
+        {
+            perror("Error changing directory");
+            return NULL;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+            return NULL;
+
+        char *local_aliasPath = (char *) malloc ((PATH_MAX) * sizeof(char));
+        snprintf(local_aliasPath, PATH_MAX, "%s", currentDir);
+        strcat(local_aliasPath, "/.neogit/local_aliases");
+
+       
+         char *glob_aliasPath = (char *) malloc ((PATH_MAX) * sizeof(char));
+        strcpy(glob_aliasPath, "/home/kimia/.neogitconfig/aliases.txt");
+         struct stat stat1, stat2;
+        if (stat(local_aliasPath, &stat1) == -1) {
+        perror("Error getting file information for file1");
+        return NULL;
+        }
+
+        if (stat(glob_aliasPath, &stat2) == -1) {
+        perror("Error getting file information for file2");
+        return NULL;
+        }
+         if (stat1.st_mtime > stat2.st_mtime) {
+                    return local_aliasPath;
+                    
+        } else if (stat1.st_mtime < stat2.st_mtime) {
+            return glob_aliasPath;
+        } 
+    }
+}
+
+char *check_and_replace_alias(char *command, char *alias_filePath)
+{
+    // char cwd[1024];
+    // if (getcwd(cwd, sizeof(cwd)) == NULL)
+    //     return NULL;
+    // char originalCwd[1024];
+    // strcpy(originalCwd, cwd);
+    // char tmp_cwd[1024];
+    // char currentDir[1024];
+    // bool foundNeogit = false;
+    // struct dirent *entry;
+    // do
+    // {
+    //     DIR *dir = opendir(".");
+    //     if (dir == NULL)
+    //     {
+    //         perror("Error opening current directory");
+    //         return NULL;
+    //     }
+    //     while ((entry = readdir(dir)) != NULL)
+    //     {
+    //         if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
+    //         {
+    //             foundNeogit = true;
+    //             break;
+    //         }
+    //     }
+    //     closedir(dir);
+    //     if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+    //         return NULL;
+    //     if (strcmp(tmp_cwd, "/") != 0)
+    //     {
+    //         if (chdir("..") != 0)
+    //             return NULL;
+    //     }
+    // } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    // if (!foundNeogit)
+    // {
+    //     printf("neogit has not been initialized\n");
+    //     return NULL;
+    // }
+    // else
+    // {
+    //     if (chdir(tmp_cwd) != 0)
+    //     {
+    //         perror("Error changing directory");
+    //         return NULL;
+    //     }
+    //     strcpy(currentDir, tmp_cwd);
+    //     if (chdir(cwd) != 0)
+    //         return NULL;
+        // char aliasPath[PATH_MAX];
+        // snprintf(aliasPath, sizeof(aliasPath), "%s/.neogit/local_aliases", currentDir);
+
+        FILE *file = fopen(alias_filePath, "r");
+        if (file == NULL) {
+            return NULL;
+        }
+        char line[1024];
+        char *corr;
+        char *command1;
+        while (fgets(line, 1024, file) != NULL) {
+       
+        command1 = strtok(line, ":");
+        corr = strtok(NULL, "\n");
+
+        // Trim leading and trailing spaces from name and corr
+        if (command1 != NULL) {
+            while (*command1 == ' ' || *command1== '\t') {
+                command1++;
+            }
+        }
+        if (corr != NULL) {
+            while (*corr == ' ' || *corr == '\t') {
+                corr++;
+            }
+        }
+
+        // Compare the input name with the name in the file
+        if (command1 != NULL && corr != NULL && strcmp(command1, command) == 0) {
+              fclose(file);
+              return corr;
+        }
+         
+    }
+    return NULL;
+    // }
 }

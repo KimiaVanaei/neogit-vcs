@@ -1,6 +1,6 @@
 #include "file_functions.h"
 
-int checkout_to_id_branch(char *branchname, int target_ID)
+int checkout_to_id_branch(char *branchname, int N)
 {
 	char cwd[1024];
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
@@ -93,7 +93,7 @@ int checkout_to_id_branch(char *branchname, int target_ID)
 				}
 
 				if (is_tracked(filePath))
-					checkout_file_to_id_branch(entry->d_name, filePath, branchname, target_ID);
+					checkout_file_to_id_branch(entry->d_name, filePath, branchname, N);
 			}
 		}
 		closedir(dir);
@@ -102,7 +102,7 @@ int checkout_to_id_branch(char *branchname, int target_ID)
 	}
 }
 
-int checkout_file_to_id_branch(char *filename, char *filepath, char *branchname, int target_ID)
+int checkout_file_to_id_branch(char *filename, char *filepath, char *branchname, int N)
 {
     char cwd[1024];
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
@@ -159,27 +159,36 @@ int checkout_file_to_id_branch(char *filename, char *filepath, char *branchname,
 	char target_path[PATH_MAX];
 	snprintf(filPath, sizeof(filPath), "%s/.neogit/branches/", currentDir);
     strcat(filPath, branchname);
-    strcat(filPath, "/");
-	// printf("%s\n", filPath);       // /mnt/c/c_test/proj/.neogit/branches/bery/                                                         
+    strcat(filPath, "/");                                                       
 	char branchDir[PATH_MAX];
 	strcpy(branchDir, filPath);
 	DIR *dir2 = opendir(branchDir);
 	
 	int count = 0;
+	int tedad_dirc = 0;
 	struct dirent* entry2;
+	 while ((entry2 = readdir(dir2)) != NULL) {
+        if (entry2->d_type == DT_DIR && strcmp(entry2->d_name, ".") != 0 && strcmp(entry2->d_name, "..") != 0) {
+            tedad_dirc++;
+        }
+     }
+	 rewinddir(dir2);
+	 int n = tedad_dirc - N;
 	while ((entry2 = readdir(dir2)) != NULL) {
         if (entry2->d_type == DT_DIR && strcmp(entry2->d_name , ".") != 0 && strcmp(entry2->d_name , "..") != 0) {
             count++;
-            if (count == target_ID) {
+            if (count == n) {
 				strcpy(target_path, branchDir);
 				strcat(target_path, entry2->d_name);
                 strcat(target_path, "/");
+				int new_currentID = atoi(entry2->d_name);
+				change_current_ID(new_currentID);
                 break;
             }
         }
     }
     closedir(dir2);
-	// printf("%s\n", target_path);          // /mnt/c/c_test/proj/.neogit/branches/hihi/2/
+
     char src_file[1024];
     strcpy(src_file, target_path);
     strcat(src_file, filename);

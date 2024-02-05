@@ -64,6 +64,8 @@ int run_commit(int argc, char *const argv[])
         snprintf(filPath, sizeof(filPath), "%s/.neogit/files/", currentDir);
         char allfilesPath[PATH_MAX];
         snprintf(allfilesPath, sizeof(allfilesPath), "%s/.neogit/all_files/", currentDir);
+        char brPath[PATH_MAX];
+        snprintf(brPath, sizeof(brPath), "%s/.neogit/branches/", currentDir);
 
         if (argc < 4)
         {
@@ -136,12 +138,21 @@ int run_commit(int argc, char *const argv[])
                 if (mkdir(dir_path, 0755) != 0)
                     return 1;
             }
+             if (!check_mas_directory_exists())
+            {
+                char dir_path[PATH_MAX];
+                strcpy(dir_path, brPath);
+                strcat(dir_path, "master");
+                if (mkdir(dir_path, 0755) != 0)
+                    return 1;
+            }
             char line1[1024];
             sscanf(line, "%s", line1);
             long int modtime;
             sscanf(line, "%*s\t%ld", &modtime);
             commit_staged_file(commit_ID, line1, modtime);
             saveContent(commit_ID, line1, fileName);
+            saveContent_for_branch(commit_ID, line1, fileName, "master");
             saveContent_total(commit_ID, line1, fileName);
             track_file(line1);
         }

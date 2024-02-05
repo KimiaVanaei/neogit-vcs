@@ -2,11 +2,13 @@
 #define _FILEFUNCTIONS_H_
 #define _GNU_SOURCE
 #define PATH_MAX 4096
+#define STR_LINE_MAX 1024
 #define RED   "\x1B[31m"
 #define GRN   "\x1B[32m"
 #define YEL   "\x1B[33m"
 #define BLU   "\x1B[34m"
 #define MAG   "\x1B[35m"
+#define BRMAG   "\x1B[95m"
 #define CYN   "\x1B[36m"
 #define WHT   "\x1B[37m"
 #define RESET "\x1B[0m"
@@ -32,6 +34,15 @@ struct tagInfo {
     char message[100];
     char operationTime[20];
 };
+typedef struct {
+    char **deletedLines;
+    unsigned int *lineNumberDeleted;
+    size_t deletedCount;
+
+    char **addedLines;
+    unsigned int *lineNumberAdded;
+    size_t addedCount;
+} Diff;
 typedef struct Commit {
     char message[100];
     struct Commit* parent;
@@ -51,6 +62,7 @@ int add_to_staging(char *filepath);
 int add_to_staging_recursive(char *dirpath);
 bool check_file_directory_exists(char *filepath);
 bool check_file_directory_exists_total(char *filepath);
+bool check_mas_directory_exists();
 int commit_staged_file(int commit_ID, char *filepath, time_t modification_time);
 bool is_tracked(char *filepath);
 int find_file_last_commit(char* filepath);
@@ -70,10 +82,13 @@ int removeRecentStaged();
 int run_add_single(char *path);
 int add_depth(const char *currentDir, int depth);
 int isStaged(const char *filename);
+int run_redo(char *filepath);
+
 int add_localalias(char *newalias, char *command);
 int add_alias(char *newalias, char *command);
-char* check_and_replace_alias(char *command);
-char* get_alias_from_file(char *filename, char *command);
+char* check_and_replace_alias(char *command, char *alias_filePath);
+char* find_most_recent_aliasfile();
+
 int add_shrtcut_for_msg(char *newshortcut, char *msg);
 void update_msg(char *new_msg, char *shrtcut);
 void delete_msg(char *shrtcut);
@@ -95,6 +110,8 @@ char *currentBranch();
 void printLogContentbyBranch(char *target_branch);
 void printLogContentbyAuthor(char *target_author);
 void printLogContentbyWords(char **target_words, int num_words);
+int matchesWildcard(const char *str, const char *pattern);
+
 int saveContent(int commit_ID, char* filepath, char *filename);
 int saveContent_total(int commit_ID, char *filepath, char *filename);
 int run_branch(char *branch_name);
@@ -125,6 +142,7 @@ int inc_last_commit_ID_total();
 int extract_current_ID();
 int extract_lastID_master();
 int extract_lastID_branch(char *branchname);
+int extract_lastID_total();
 void change_current_ID(int new_currentID);
 
 int add_info_to_tags_file(int commit_ID, char *message, char *time, char *tagname, char *author);
@@ -139,13 +157,29 @@ void printTagNamesInOrder();
 
 int run_revert(int argc, char *const argv[]);
 int run_revert_for_last_id(int argc, char *const argv[]);
-int run_revertm(int argc, char *const argv[]);
+int checkout_file_to_id_branch2(char *filename, char *filepath, char *branchname, int N);
+int run_revertm_HEAD(char *branchname, int N);
 
 void searchWordInFile(char *filePath, char *searchWord) ;
 int isWordMatch(const char *line, const char *searchWord);
 void searchWordInFileandPrintnum(char *filePath, char *searchWord);
 void searchWordInFile_in_a_id(char *filename, char *targetWord,int commit_ID);
 void searchWordInFile_in_a_id_andprintNum(char *filename, char *targetWord,int commit_ID);
+
+void find_diff_between_two(int first_id, int second_id);
+void run_diff_for_matched(char *commonPath, int first_id, int scnd_id);
+void run_diff_for_matched2(char *commonPath, int first_id, int scnd_id);
+char *strTrim(char *str);
+char *strDuplicate(const char *str);
+int compareLines(FILE *baseFile, FILE *changedFile, char *line1, char *line2, unsigned int *line1_cnt, unsigned int *line2_cnt);
+Diff getDiff(const char *baseFilePath, const char *changedFilePath, int f1begin, int f1end, int f2begin, int f2end);
+void printDifferences(const Diff *diff, const char *baseFilePath, const char *changedFilePath);
+void normalizeLineEndings(char *line);
+int countLines(const char *filePath);
+
+int add_merged_branch(char *branch_name);
+int run_merge(int first_id, int second_id);
+void printDifferences_merge(const Diff *diff, const char *baseFilePath, const char *changedFilePath, const char *filename);
 
 
 
