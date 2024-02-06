@@ -37,87 +37,84 @@ int run_status()
             }
             time_t modification_time = file_info.st_mtime;
 
-            int curr_commit_ID = extract_current_ID();
-            if (curr_commit_ID == 0)
+             int curr_commit_ID = extract_current_ID();
+            if (!isStaged(filePath))
             {
-                    if (isStaged(filePath))
-                    {
-                        long int savedModTime_instg1 = getSavedModTime_fromstg(filePath);
-                        printf("%ld\n", savedModTime_instg1);
-                        printf("%ld\n", modification_time);
-                        if (savedModTime_instg1 != modification_time)
+                if (!is_tracked(filePath))       // not staged and not tracked
+                {
+                    printf("%s\t%c%c\n", entry->d_name, '-', 'A');
+                }
+                else                              // not staged but is tracked
+                {
+                       if (isInLastCommits(filePath, curr_commit_ID))
                         {
-
-                            printf("%s\t%c%c\n", entry->d_name, '+', 'M');
+                            long int savedModTime = getSavedModTime(filePath, curr_commit_ID);
+                            if (savedModTime != modification_time)
+                            {
+                                printf("%s\t%c%c\n", entry->d_name, '-', 'M');
+                            }
                         }
                         else
                         {
-                           printf("%s\t%c%c\n", entry->d_name, '+', 'A');
+                            ////////
                         }
-                    }
-                    else {
-                        printf("%s\t%c%c\n", entry->d_name, '-', 'A');
+
                     }
             }
-            else
+            if (isStaged(filePath))
             {
-
-                int res = isInLastCommits(filePath, curr_commit_ID);
-
-                if (res == -1)
-                    return 0;
-                else if (res == 0) // dar akharin commit nist
+                if(!is_tracked(filePath))      // staged but not tracked
                 {
-                    
-                    if (isStaged(filePath))
-                    {
-                        long int savedModTime_instg = getSavedModTime_fromstg(filePath);
-                        if (savedModTime_instg != modification_time)
+                    long int saved_modtimestg = getSavedModTime_fromstg(filePath);
+                    printf("%s\t%c%c\n", entry->d_name, '+', 'A');
+                }
+                else
+                {
+                        if (isInLastCommits(filePath, curr_commit_ID))
                         {
-                            printf("%s\t%c%c\n", entry->d_name, '+', 'M');
+                            long int savedModTime = getSavedModTime(filePath, curr_commit_ID);
+                            if (savedModTime != modification_time)
+                            {
+                                printf("%s\t%c%c\n", entry->d_name, '+', 'M');
+                            }
                         }
                         else
                         {
-                             printf("%ld\n", savedModTime_instg);
-                        printf("%ld\n", modification_time);
-                            // ?????
+                            ////////
                         }
-                    }
 
-                    else
-                        printf("%s\t%c%c\n", entry->d_name, '-', 'A');
                 }
-                else if (res == 1)
-                {
-                    long int savedModTime = getSavedModTime(filePath, curr_commit_ID);
-
-                    if (savedModTime != modification_time)
-                    {
-                        if (isStaged(filePath))
-                            printf("%s\t%c%c\n", entry->d_name, '+', 'M');
-                        else
-                            printf("%s\t%c%c\n", entry->d_name, '-', 'M');
-                    }
-                }
-
             }
         }
+            
     }
-                char *dd = (char *)malloc((PATH_MAX) * sizeof(char));
-                dd = isInLastCommitsButNotInCurr();
-                if (dd != NULL)
-                {
-                    char *fileName = strrchr(dd, '/');
+    char *dd = (char *)malloc((PATH_MAX) * sizeof(char));
+    dd = isInLastCommitsButNotInCurr();
+    char *dd2 = (char *)malloc((PATH_MAX) * sizeof(char));
+    dd2 = isInStagingButNotInCurr();
+    if (dd != NULL)
+    {
+        char *fileName = strrchr(dd, '/');
 
-                    if (fileName != NULL)
-                    {
-                        fileName++;
-                    }
-                    if (isStaged(dd))
-                        printf("%s\t%c%c\n", fileName, '+', 'D');
-                    else
-                        printf("%s\t%c%c\n", fileName, '-', 'D');
-                }
+        if (fileName != NULL)
+        {
+            fileName++;
+        }
+        if (isStaged(dd))
+            printf("%s\t%c%c\n", fileName, '+', 'D');
+        else
+            printf("%s\t%c%c\n", fileName, '-', 'D');
+    }
+    if (dd2 != NULL)
+    {
+        char *fileName2 = strrchr(dd2, '/');
+
+        if (fileName2 != NULL)
+        {
+            fileName2++;
+        }
+       printf("%s\t%c%c\n", fileName2, '+', 'D');
+    }
     return 0;
 }
 
@@ -564,17 +561,16 @@ char *isInLastCommitsButNotInCurr()
             perror("Error restoring original directory");
             return NULL;
         }
-         
+
         char tmp[10];
-        sprintf(tmp, "%d", last_ID());
+        sprintf(tmp, "%d", extract_lastID_total());
         strcat(lastcommit_path, tmp);
         FILE *fptr = fopen(lastcommit_path, "r");
         if (fptr == NULL)
         {
-            perror("Error opening file");
             return NULL;
         }
-         char line[PATH_MAX];
+        char line[PATH_MAX];
         while (fgets(line, sizeof(line), fptr) != NULL)
         {
             int length = strlen(line);
@@ -596,4 +592,111 @@ char *isInLastCommitsButNotInCurr()
 
         return NULL;
     }
+}
+
+
+char *isInStagingButNotInCurr()
+{
+    char cwd[PATH_MAX];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+    {
+        perror("Error getting current working directory");
+        return NULL;
+    }
+
+    char originalCwd[PATH_MAX];
+    strcpy(originalCwd, cwd);
+
+    char tmp_cwd[PATH_MAX];
+    char currentDir[PATH_MAX];
+    bool foundNeogit = false;
+    struct dirent *entry;
+
+    do
+    {
+        DIR *dir = opendir(".");
+        if (dir == NULL)
+        {
+            perror("Error opening current directory");
+            return NULL;
+        }
+
+        while ((entry = readdir(dir)) != NULL)
+        {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".neogit") == 0)
+            {
+                foundNeogit = true;
+                break;
+            }
+        }
+
+        closedir(dir);
+
+        if (getcwd(tmp_cwd, sizeof(tmp_cwd)) == NULL)
+            return NULL;
+
+        if (strcmp(tmp_cwd, "/") != 0)
+        {
+            if (chdir("..") != 0)
+                return NULL;
+        }
+
+    } while (!foundNeogit && strcmp(tmp_cwd, "/") != 0);
+
+    if (!foundNeogit)
+    {
+        printf("neogit has not been initialized\n");
+        return NULL;
+    }
+    else
+    {
+        if (chdir(tmp_cwd) != 0)
+        {
+            perror("Error changing directory");
+            return NULL;
+        }
+        strcpy(currentDir, tmp_cwd);
+        if (chdir(cwd) != 0)
+            return NULL;
+
+        int found = 0;
+        char stg_path[PATH_MAX];
+        int ret = snprintf(stg_path, sizeof(stg_path), "%s/.neogit/staging", currentDir);
+        if (ret < 0)
+        {
+            abort();
+        }
+        if (chdir(originalCwd) != 0)
+        {
+            perror("Error restoring original directory");
+            return NULL;
+        }
+         FILE *fptr = fopen(stg_path, "r");
+        if (fptr == NULL)
+        {
+            return NULL;
+        }
+        char line[PATH_MAX];
+        while (fgets(line, sizeof(line), fptr) != NULL)
+        {
+            int length = strlen(line);
+
+            if (length > 0 && line[length - 1] == '\n')
+            {
+                line[length - 1] = '\0';
+            }
+
+            char *storedpath = (char *)malloc((PATH_MAX) * sizeof(char));
+            sscanf(line, "%s", storedpath);
+
+            // Check if the stored path is not present in the current working directory
+            if (access(storedpath, F_OK) != 0)
+            {
+                return strdup(storedpath); // Return the path
+            }
+        }
+        return NULL;
+    }
+
+
 }

@@ -44,7 +44,7 @@ int run_commit(int argc, char *const argv[])
 
     if (!foundNeogit)
     {
-        printf("neogit has not been initialized\n");
+        printf(RED "neogit has not been initialized!\n" RESET);
 
         return 1;
     }
@@ -69,7 +69,7 @@ int run_commit(int argc, char *const argv[])
 
         if (argc < 4)
         {
-            perror("You have not provided a commit message");
+            printf(RED "You have not provided a commit message!\n" RESET);
             return 1;
         }
 
@@ -77,7 +77,7 @@ int run_commit(int argc, char *const argv[])
         strcpy(message, argv[3]);
         if (strlen(message) > 72)
         {
-            perror("commit message should not exceed 72 characters");
+            printf(RED "Commit message should not exceed 72 characters\n" RESET);
             return 1;
         }
 
@@ -93,7 +93,7 @@ int run_commit(int argc, char *const argv[])
 
         if (size == 0)
         {
-            perror("nothing to commit");
+            printf(YEL "Nothing to commit!\n" RESET);
             return 1; // File is empty
         }
 
@@ -173,9 +173,9 @@ int run_commit(int argc, char *const argv[])
             return 1;
         fclose(file);
 
-        fprintf(stdout, "commit successfully with commit ID : %d\n", commit_ID);
-        fprintf(stdout, "operation done in : %s\n", time_str);
-        fprintf(stdout, "commit message : %s\n", message);
+        fprintf(stdout, GRN "Commit successfully with commit ID : %d\n" RESET, commit_ID);
+        fprintf(stdout, CYN "Operation done in : %s\n" RESET, time_str);
+        fprintf(stdout, CYN "Commit message : %s\n" RESET, message);
         return 0;
     }
 }

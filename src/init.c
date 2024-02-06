@@ -46,6 +46,25 @@ int create_configs(char *username, char *email)
 		return 1;
 	fclose(file6);
 
+	FILE *file7 = fopen(".neogit/all_hooks", "w");
+	if (file7 == NULL)
+		return 1;
+		fprintf(file7, "todo-check\n");
+		fprintf(file7, "eof-blank-space\n");
+		fprintf(file7, "format-check\n");
+		fprintf(file7, "balance-braces\n");
+		fprintf(file7, "indentation-check\n");
+		fprintf(file7, "static-error-check\n");
+		fprintf(file7, "file-size-check\n");
+		fprintf(file7, "character-limit\n");
+		fprintf(file7, "time-limit\n");
+	fclose(file7);
+
+	FILE *file8 = fopen(".neogit/applied_hooks", "w");
+	if (file8 == NULL)
+		return 1;
+	fclose(file8);
+
 	return 0;
 }
 

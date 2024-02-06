@@ -40,11 +40,17 @@ int run_add_single(char *path)
 
     if (!exists)
     {
-        perror("neogit has not been initialized");
+        perror(RED "neogit has not been initialized!" RESET);
         return -1;
     }
     else
     {
+        int set = configs_are_set();
+        if (!set)
+        {
+            printf(RED "Please set a local or global config first!\n" RESET);
+            return -1;
+        }
         struct stat file_stat;
         if (stat(path, &file_stat) != 0)
         {

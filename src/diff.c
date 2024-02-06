@@ -249,7 +249,7 @@ void printDifferences(const Diff *diff, const char *baseFilePath, const char *ch
 
     for (size_t i = 0; i < maxDeletedLines || i < maxAddedLines; ++i) {
         if (i < maxDeletedLines) {
-            printf(BRMAG "<< << << << <<\n%s-%u\n%s\n" RESET, file1Name, (diff->lineNumberDeleted[i])+1, diff->deletedLines[i]);
+            printf(CYN "<< << << << <<\n%s-%u\n%s\n" RESET, file1Name, (diff->lineNumberDeleted[i])+1, diff->deletedLines[i]);
         } 
         if (i < maxAddedLines) {
             printf(YEL "%s-%u\n%s\n>> >> >> >> >>\n" RESET, file2Name, (diff->lineNumberAdded[i])+1, diff->addedLines[i]);
@@ -265,7 +265,7 @@ void printDifferences_merge(const Diff *diff, const char *baseFilePath, const ch
     }
     for (size_t i = 0; i < maxDeletedLines || i < maxAddedLines; ++i) {
         if (i < maxDeletedLines) {
-            printf(BRMAG "<< << << << << %s >> >> >> >> >>\n%s-%u\n%s\n" RESET, baseFilePath, filename, (diff->lineNumberDeleted[i])+1, diff->deletedLines[i]);
+            printf(CYN "<< << << << << %s >> >> >> >> >>\n%s-%u\n%s\n" RESET, baseFilePath, filename, (diff->lineNumberDeleted[i])+1, diff->deletedLines[i]);
         } 
         if (i < maxAddedLines) {
             printf(YEL "<< << << << << %s >> >> >> >> >>\n%u\n%s\n" RESET, changedFilePath, (diff->lineNumberAdded[i])+1, diff->addedLines[i]);

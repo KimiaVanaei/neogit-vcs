@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
     
     if ((argc < 2))
     {
-        printf(RED "invalid command\n" RESET);
+        printf(RED "INVALID COMMAND!\n" RESET);
         return 1;
     }
  
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     }
     else if ((argc == 2) && (strcmp(argv[1], "add") == 0))
     {
-        printf(RED "please specify a file\n" RESET);
+        printf(RED "Please specify a file!\n" RESET);
     }
     // else if ((argc == 3) && (strcmp(argv[1], "add") == 0) && (strcmp(argv[2], "-n") != 0) && (strcmp(argv[2], "-f") != 0))
     // {
@@ -353,27 +353,13 @@ int main(int argc, char *argv[])
     {
         printBranches();
     }
-    else if ((argc == 3) && (strcmp(argv[1], "test") == 0))
-    {
-        printf("Entering 'test' block\n");
-        char *str = argv[2];
-        printf("String: %s\n", str);
-        printf("Before containsWildcard\n");
-
-        if (containsWildcard(str))
-        {
-            printf("Entering containsWildcard block\n");
-            identifyWordsWithWildcard(str);
-        }
-        printf("Leaving 'test' block\n");
-    }
     /////////////////////////////////////////////////////
     else if ((argc == 8) && (strcmp(argv[1], "tag") == 0) && (strcmp(argv[2], "-a") == 0) && (strcmp(argv[4], "-m") == 0) && (strcmp(argv[6], "-c") == 0))
     {
         time_t t = time(NULL);
         struct tm *current_time = localtime(&t);
         char time_str[50];
-        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); //ejbri
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); 
         char *author = (char *)malloc(50 * sizeof(char));
         author = currentAuthor();
         int commit_id = atoi(argv[7]);
@@ -388,7 +374,7 @@ int main(int argc, char *argv[])
         time_t t = time(NULL);
         struct tm *current_time = localtime(&t);
         char time_str[50];
-        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); //ejbri
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time);
         char *author = (char *)malloc(50 * sizeof(char));
         author = currentAuthor();
         int commit_id = atoi(argv[7]);
@@ -403,7 +389,7 @@ int main(int argc, char *argv[])
         time_t t = time(NULL);
         struct tm *current_time = localtime(&t);
         char time_str[50];
-        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); //ejbri
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time);
         char *author = (char *)malloc(50 * sizeof(char));
         author = currentAuthor();
         char tagname[50];
@@ -433,7 +419,7 @@ int main(int argc, char *argv[])
         time_t t = time(NULL);
         struct tm *current_time = localtime(&t);
         char time_str[50];
-        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); //ejbri
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); 
         char *author = (char *)malloc(50 * sizeof(char));
         author = currentAuthor();
         char tagname[50];
@@ -447,7 +433,7 @@ int main(int argc, char *argv[])
         time_t t = time(NULL);
         struct tm *current_time = localtime(&t);
         char time_str[50];
-        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); //ejbri
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_time); 
         char *author = (char *)malloc(50 * sizeof(char));
         author = currentAuthor();
         char tagname[50];
@@ -680,25 +666,59 @@ int main(int argc, char *argv[])
                system(command);
          }
     }
-// else if ((argc == 2))
-// {
-//     char *recent_alias_filePath = find_most_recent_aliasfile();
-//     char *corr = check_and_replace_alias(argv[1], recent_alias_filePath);
-//     if (corr != NULL) {
-//         system(corr);
-//         if (system(corr) == -1) {
-//     perror("Error executing command");
-// }
 
-//     } else {
-//         fprintf(stderr, "Error in check_and_replace_alias\n");
-//     }
-// }
-else if ((argc == 2) && strcmp(argv[1], "hello") == 0)
+    else if ((argc == 4) && (strcmp(argv[1], "pre-commit") == 0) && (strcmp(argv[2], "hooks") == 0) && (strcmp(argv[3], "list") == 0))
+    {
+        printHooksList();
+    }
+    else if ((argc == 5) && (strcmp(argv[1], "pre-commit") == 0) && (strcmp(argv[2], "add") == 0) && (strcmp(argv[3], "hook") == 0))
+    {
+        addToAppliedHooks(argv[4]);
+    }
+    else if ((argc == 4) && (strcmp(argv[1], "pre-commit") == 0) && (strcmp(argv[2], "applied") == 0) && (strcmp(argv[3], "hooks") == 0))
+    {
+        print_appliedHooksList();
+    }
+    // neogit pre-commit remove hook <hook-id>
+    else if ((argc == 5) && (strcmp(argv[1], "pre-commit") == 0) && (strcmp(argv[2], "remove") == 0) && (strcmp(argv[3], "hook") == 0))
+    {
+        removeAppliedHook(argv[4]);
+    }
+    else if ((argc == 5) && (strcmp(argv[1], "pre-commit") == 0) && (strcmp(argv[2], "-f") == 0))
+    {
+        char file1Path[PATH_MAX];
+        if (realpath(argv[3], file1Path) == NULL)
+        {
+           perror("realpath");
+           exit(EXIT_FAILURE);
+        }
+        char file2Path[PATH_MAX];
+        if (realpath(argv[4], file2Path) == NULL)
+        {
+           perror("realpath");
+           exit(EXIT_FAILURE);
+        }
+         run_preF(file1Path);
+         run_preF(file2Path);
+    }
+    else if ((argc == 2) && (strcmp(argv[1], "pre-commit") == 0))
+    {
+        return run_pre();
+    }
+else if ((argc == 2))
 {
-    char *comm = "neogit add bye.txt";
-    system(comm);
+    char *corr = check_and_replace_alias(argv[1]);
+    if (corr != NULL) {
+        system(corr);
+    } else {
+        printf(RED "INVALID COMMAND!\n" RESET);
+    }
 }
+
+// else
+// {
+//     printf(RED "INVALID COMMAND!\n" RESET);
+// }
 
 
 

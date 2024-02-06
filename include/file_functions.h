@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <libgen.h>
 #include <glob.h>
+
 struct tagInfo {
     char tagname[50];
     int commitID;
@@ -43,18 +44,7 @@ typedef struct {
     unsigned int *lineNumberAdded;
     size_t addedCount;
 } Diff;
-typedef struct Commit {
-    char message[100];
-    struct Commit* parent;
-    char files[10][50];  // List of imaginary files in this commit
-    int numFiles;
-} Commit;
 
-// Structure to represent a branch
-typedef struct Branch {
-    char name[50];
-    Commit* head;
-} Branch;
 int run_add(int argc, char *const argv[]);
 int create_configs(char *username, char *email);
 int run_init();
@@ -86,17 +76,15 @@ int run_redo(char *filepath);
 
 int add_localalias(char *newalias, char *command);
 int add_alias(char *newalias, char *command);
-char* check_and_replace_alias(char *command, char *alias_filePath);
+char *check_and_replace_alias(char *command);
+char *check_and_replace_alias_glob(char *command);
 char* find_most_recent_aliasfile();
 
 int add_shrtcut_for_msg(char *newshortcut, char *msg);
 void update_msg(char *new_msg, char *shrtcut);
 void delete_msg(char *shrtcut);
-void create_mod_file2(const char *filename, const char *modsFilename);
-int check_status2(const char *filename, const char *modsFilename);
-void updateModsFile(char *fileName, time_t modTime);
-void mayn();
-void printFileChanges();
+
+
 int printLogContent();
 int printLogContentbyNum(int n);
 void filterCommitsSince(char *date);
@@ -120,6 +108,7 @@ void printBranches();
 void createDirectory(const char *dirPath);
 void hasFileWithNumber(const char *dirPath, int targetNumber, char *branchname);
 char* isInLastCommitsButNotInCurr();
+char *isInStagingButNotInCurr();
 long int getSavedModTime_fromstg(char *filepath);
 int configs_are_set();
 void change_branch_in_configs(char *new_branchname);
@@ -180,6 +169,23 @@ int countLines(const char *filePath);
 int add_merged_branch(char *branch_name);
 int run_merge(int first_id, int second_id);
 void printDifferences_merge(const Diff *diff, const char *baseFilePath, const char *changedFilePath, const char *filename);
+
+void printHooksList();
+void addToAppliedHooks(char *newHook);
+void print_appliedHooksList();
+void removeAppliedHook(char *target);
+int extra_wtspc(char *path);
+int size_chk(char *path);
+int char_lim(char *path);
+int todo_chk(char *path);
+int isWord(const char *str);
+int todo_chk_txt(char *path);
+int containsTodo(const char *line);
+int checkBraceBalance(char *path);
+int chk_format(char *path);
+int run_pre();
+void run_preF(char *path1);
+bool isIDpresentinFILE(char *pre);
 
 
 

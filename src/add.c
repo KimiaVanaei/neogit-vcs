@@ -193,7 +193,7 @@ int run_add(int argc, char *const argv[])
         int set = configs_are_set();
         if (!set)
         {
-            printf("Please set local or global configs first\n");
+            printf(RED "Please set a local or global config first!\n" RESET);
             return -1;
         }
         struct stat file_stat;
