@@ -309,9 +309,9 @@ int main(int argc, char *argv[])
     {
         return printLogContent();
     }
-    else if ((argc == 3) && (strcmp(argv[1], "log") == 0))
+    else if ((argc == 3) && (strcmp(argv[1], "log") == 0) && (strcmp(argv[2], "-n") == 0))
     {
-        int n = atoi(argv[2]);
+        int n = atoi(argv[3]);
         return printLogContentbyNum(n);
     }
     // neogit log-since <date>

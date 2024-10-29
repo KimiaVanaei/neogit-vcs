@@ -154,6 +154,29 @@ int run_pre()
                 // if (isIDpresentinFILE("time-limit"))
                 // printf("\"%s\"...........................................................%s\n", CYN "time-limit" RESET, YEL "SKIPPED" RESET);
             }
+            else
+            {
+                 printf(BLU "\"%s\" :\n" RESET, fileName);
+                if (isIDpresentinFILE("todo-check"))
+                printf("\"%s\"...........................................................%s\n", CYN "todo-check" RESET, YEL "SKIPPED" RESET);
+                if (isIDpresentinFILE("eof-blank-space"))
+                printf("\"%s\"...........................................................%s\n", CYN "eof-blank-space" RESET, YEL "SKIPPED" RESET);
+                if (isIDpresentinFILE("balance-braces"))
+                printf("\"%s\"...........................................................%s\n", CYN "balance-braces" RESET, YEL "SKIPPED" RESET);
+                if (isIDpresentinFILE("format-check"))
+                printf("\"%s\"...........................................................%s\n", CYN "format-check" RESET, (chk_format(fpath) == 1) ? GRN "PASSED" RESET : RED "FAILED" RESET);
+                if (isIDpresentinFILE("file-size-check"))
+                printf("\"%s\"...........................................................%s\n", CYN "file-size-check" RESET, (size_chk(fpath) == 0) ? GRN "PASSED" RESET : RED "FAILED" RESET);
+                if (isIDpresentinFILE("character-limit"))
+                printf("\"%s\"...........................................................%s\n", CYN "character-limit" RESET, YEL "SKIPPED" RESET);
+                if (isIDpresentinFILE("indentation-check"))
+                printf("\"%s\"...........................................................%s\n", CYN "indentation-check" RESET, YEL "SKIPPED" RESET);
+                if (isIDpresentinFILE("static-error-check"))
+                printf("\"%s\"...........................................................%s\n", CYN "static-error-check" RESET, YEL "SKIPPED" RESET);
+                // if (isIDpresentinFILE("time-limit"))
+                // printf("\"%s\"...........................................................%s\n", CYN "time-limit" RESET, YEL "SKIPPED" RESET);
+
+            }
         }
             
 
